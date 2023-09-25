@@ -9,6 +9,12 @@ namespace slicer
 {
     internal class Utils
     {
+        /// <summary>
+        /// Метод для извлечения координат Vertex
+        /// </summary>
+        /// <param name="line"> Строка, над которой ведется работа</param>
+        /// <param name="trimmer"> Символ, по которому происходит разделение</param>
+        /// <returns></returns>
         public static double[] DoubleFromLine (string line, char trimmer)
         {
             double[] result = new double[3];

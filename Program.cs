@@ -1,9 +1,12 @@
-﻿using slicer.stl;
+﻿using slicer;
+using slicer.stl;
 
 string path = $"test.stl";
-Stl stl = new Stl(path);
+double overlap = 0.1;
+double heightStep = 0.1;
 
-// создай класс настройки для робота и экземпляр этого класса
+Stl stl = new Stl(path);
+Robot robot = new Robot(overlap, heightStep);
 
 // создай класс Builder где будет формироваться G_Code
 

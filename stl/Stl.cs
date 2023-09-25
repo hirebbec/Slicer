@@ -15,14 +15,50 @@ namespace slicer.stl
         private double _minX, _minY, _minZ, _maxX, _maxY, _maxZ;
         private List<Facet> _facets;
 
-
+        /// <summary>
+        /// Формирование экземпляра класса STl
+        /// </summary>
+        /// <param name="filePath"> Путь к STL детали</param>
         public Stl(string filePath)
         {
             StructureForming(filePath);
             FindBoxCoords();
         }
 
+        public double MinX 
+        {
+            get { return _minX; }
+        }
 
+        public double MinY
+        {
+            get { return _minY; }
+        }
+
+        public double MinZ
+        {
+            get { return _minZ; }
+        }
+
+        public double MaxX
+        {
+            get { return _maxX; }
+        }
+
+        public double MaxY
+        {
+            get { return _maxY; }
+        }
+
+        public double MaxZ
+        {
+            get { return _maxZ; }
+        }
+
+        /// <summary>
+        /// Формирует структуру STL детали
+        /// </summary>
+        /// <param name="filePath"></param>
         public void StructureForming(string filePath)
         {
 
@@ -49,6 +85,9 @@ namespace slicer.stl
 
         }
 
+        /// <summary>
+        /// Метод для нахождения минимальных и максимальных координат STL детали.
+        /// </summary>
         public void FindBoxCoords()
         {
             double minx = _facets[0].vertex1.x;
