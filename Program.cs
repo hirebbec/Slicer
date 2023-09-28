@@ -9,7 +9,6 @@ double heightStep = 0.1;
 Stl stl = new Stl(path);
 Robot robot = new Robot(overlap, heightStep);
 
-Builder b = new Builder();
-// создай класс Builder где будет формироваться G_Code
+Builder builder = new Builder();
 
 Console.WriteLine("Program complete!");
