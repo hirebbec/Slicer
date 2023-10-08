@@ -55,6 +55,12 @@ namespace slicer.stl
             get { return _maxZ; }
         }
 
+        public List<Facet> Facets
+        {
+            get
+            { return _facets; }
+        }
+
         /// <summary>
         /// Формирует структуру STL детали
         /// </summary>

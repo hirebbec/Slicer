@@ -1,4 +1,5 @@
-﻿using System;
+﻿using slicer.stl;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace slicer
 {
-    internal class Robot
+    public class Robot
     {
         private double _overlap;
         private double _heightStep;

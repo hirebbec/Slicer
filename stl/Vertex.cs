@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace slicer.stl
 {
-    internal class Vertex
+    public class Vertex
     {
         public double x, y, z;
 
@@ -31,6 +31,13 @@ namespace slicer.stl
             this.x = coord[0];
             this.y = coord[1];
             this.z = coord[2];
+        }
+
+        public Vertex(double coord1, double coord2, double coord3)
+        {
+            this.x = coord1;
+            this.y = coord2;
+            this.z = coord3;
         }
     }
 }

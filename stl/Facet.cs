@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace slicer.stl
 {
-    internal class Facet
+    public class Facet
     {
         public Double3 normal;
         public Vertex vertex1, vertex2, vertex3;

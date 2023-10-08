@@ -3,6 +3,7 @@ using slicer.stl;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,6 +11,68 @@ namespace slicer.Bulder
 {
     public class Builder
     {
+        public static double minX, maxX, minY, maxY, minZ, maxZ;
+        public static List<Vertex> globalVertex = new List<Vertex>();
+        public static List<Vertex> cache = new List<Vertex>();
+
+        public static void StartBuid(Stl stl, Robot robot)
+        {
+            // Задаем координаты коробки с отступом от детали в половину Overlap
+            minX = stl.MinX - robot.Overlap / 2.0; maxX = stl.MaxX + robot.Overlap / 2.0;
+            minY = stl.MinY - robot.Overlap / 2.0; maxY = stl.MaxY + robot.Overlap / 2.0;
+            minZ = stl.MinZ - robot.Overlap / 2.0; maxZ = stl.MaxZ + robot.Overlap / 2.0;
+
+            // Задаем начальные координаты робота
+            Vertex currentPosition = new Vertex(minX + robot.Overlap, minY, minZ + robot.Overlap);
+
+            while (currentPosition.z < maxZ)
+            {
+                BuildPlaneZigzag(ref stl, ref robot, ref currentPosition);
+                currentPosition.x = minX + robot.Overlap;
+                currentPosition.y = minY;   
+                currentPosition.z = currentPosition.z + robot.HeightStep;
+            } // end while (currentZ < maxZ)
+            Console.WriteLine();
+        }
+
+        private static void BuildPlaneZigzag(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
+        {
+            while (currentPosition.x < maxX)
+            {
+                // going up
+                Vertex rayOrigin = currentPosition;
+                Vertex rayEnd = new Vertex(currentPosition.x, maxY, currentPosition.z);
+
+                // finding intersection
+                foreach (Facet facet in stl.Facets)
+                {
+                    if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                    {
+                        cache.Add(CoordinateIntersection(rayOrigin, rayEnd, facet));
+                    }
+                }
+                cache.Sort(delegate (Vertex one, Vertex two) { return one.y.CompareTo(two.y); });
+                UpdateData();
+                currentPosition.x = currentPosition.x + robot.Overlap;
+
+                // going down
+                rayOrigin = currentPosition;
+                rayEnd = new Vertex(currentPosition.x, minY, currentPosition.z);
+
+                // finding intersection
+                foreach (Facet facet in stl.Facets)
+                {
+                    if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                    {
+                        cache.Add(CoordinateIntersection(rayOrigin, rayEnd, facet));
+                    }
+                }
+                cache.Sort(delegate (Vertex one, Vertex two) { return one.y.CompareTo(two.y); });
+                cache.Reverse();
+                UpdateData();
+                currentPosition.x = currentPosition.x + robot.Overlap;
+            } // end while (currentPosition.x < maxX)
+        }
 
         /// <summary>
         /// Find intersection coordinates
@@ -19,7 +82,7 @@ namespace slicer.Bulder
         /// <param name="facet">Any facet's vertex</param>
         /// <param name="normal">Normal to facet</param>
         /// <returns>Coordinate of intersection</returns>
-        internal Vertex CoordinateIntersection(Vertex rayOrigin, Vertex rayEnd, Facet facet)
+        private static Vertex CoordinateIntersection(Vertex rayOrigin, Vertex rayEnd, Facet facet)
         {
             Double3 normal = facet.normal;
             Vertex f = facet.vertex1;
@@ -51,8 +114,8 @@ namespace slicer.Bulder
             p[0].x = facet.vertex1.x; p[0].y = facet.vertex1.y; p[0].z = facet.vertex1.z;
             p[1].x = facet.vertex2.x; p[1].y = facet.vertex2.y; p[1].z = facet.vertex2.z;
             p[2].x = facet.vertex3.x; p[2].y = facet.vertex3.y; p[2].z = facet.vertex3.z;
-           
-            
+
+
             // ray (origin and end point)
             Double3[] r = new Double3[] { rayOriginp, rayEndp };
 
@@ -68,7 +131,7 @@ namespace slicer.Bulder
                 intersects =
                     ((Math.Sign(sv[2]) == Math.Sign(sv[3])))
                     &&
-                    ((Math.Sign(sv[3]) == Math.Sign(sv[4])));    
+                    ((Math.Sign(sv[3]) == Math.Sign(sv[4])));
             }
 
             return intersects;
@@ -90,5 +153,17 @@ namespace slicer.Bulder
                         - (edges[0][1] * edges[1][0] * edges[2][2]);
             return (1.0 / 6.0 * det);
         }
+
+        private static void UpdateData()
+        {
+            for (int i = 0; i < cache.Count; i++) 
+            {
+                Vertex added = cache[i];
+                globalVertex.Add(added) ;
+
+            }
+            cache.Clear();
+        }
+       
     }
 }

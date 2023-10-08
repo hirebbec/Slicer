@@ -9,6 +9,6 @@ double heightStep = 0.1;
 Stl stl = new Stl(path);
 Robot robot = new Robot(overlap, heightStep);
 
-Builder builder = new Builder();
+Builder.StartBuid(stl, robot);
 
 Console.WriteLine("Program complete!");
