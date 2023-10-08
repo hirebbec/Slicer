@@ -35,6 +35,12 @@ namespace slicer.Bulder
             Console.WriteLine();
         }
 
+        /// <summary>
+        /// Sawtooth path
+        /// </summary>
+        /// <param name="stl"></param>
+        /// <param name="robot"></param>
+        /// <param name="currentPosition"></param>
         private static void BuildPlaneZigzag(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
         {
             while (currentPosition.x < maxX)
@@ -137,6 +143,14 @@ namespace slicer.Bulder
             return intersects;
         }
 
+        /// <summary>
+        /// Signed volume calculation
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="p1"></param>
+        /// <param name="p2"></param>
+        /// <param name="p3"></param>
+        /// <returns></returns>
         private static double SignedVolume(Double3 p, Double3 p1, Double3 p2, Double3 p3)
         {
             Double3 pp1 = p1 - p;
@@ -154,6 +168,9 @@ namespace slicer.Bulder
             return (1.0 / 6.0 * det);
         }
 
+        /// <summary>
+        /// Add data in global list and clear cache
+        /// </summary>
         private static void UpdateData()
         {
             for (int i = 0; i < cache.Count; i++) 
