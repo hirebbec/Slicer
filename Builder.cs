@@ -14,34 +14,55 @@ namespace slicer.Bulder
         public static double minX, maxX, minY, maxY, minZ, maxZ;
         public static List<Vertex> globalVertex = new List<Vertex>();
         public static List<Vertex> cache = new List<Vertex>();
-
-        public static void StartBuid(Stl stl, Robot robot)
+        public static Stl stl;
+        public static Vertex currentPosition;
+        public static Robot robot;
+        public static void init(Stl stl, Robot robot)
         {
-            // Задаем координаты коробки с отступом от детали в половину Overlap
-            minX = stl.MinX - robot.Overlap / 2.0; maxX = stl.MaxX + robot.Overlap / 2.0;
-            minY = stl.MinY - robot.Overlap / 2.0; maxY = stl.MaxY + robot.Overlap / 2.0;
-            minZ = stl.MinZ - robot.Overlap / 2.0; maxZ = stl.MaxZ + robot.Overlap / 2.0;
+            Builder.stl = stl;
+            Builder.robot = robot;
+        }
+
+        public static void ZigzagBuild()
+        {            
+            globalVertex.Clear();
+            goHome();
 
             // Задаем начальные координаты робота
-            Vertex currentPosition = new Vertex(minX + robot.Overlap, minY, minZ + robot.Overlap);
+            Builder.currentPosition = new Vertex(minX + robot.Overlap, minY + robot.Overlap, minZ + robot.Overlap);
 
             while (currentPosition.z < maxZ)
             {
-                BuildPlaneZigzag(ref stl, ref robot, ref currentPosition);
+                BuildPlaneZigzagX(ref stl, ref robot, ref currentPosition);
                 currentPosition.x = minX + robot.Overlap;
-                currentPosition.y = minY;   
+                currentPosition.y = minY + robot.Overlap;   
                 currentPosition.z = currentPosition.z + robot.HeightStep;
             } // end while (currentZ < maxZ)
-            Console.WriteLine();
         }
 
+        public static void CrossToCrossBuild()
+        {
+            globalVertex.Clear();
+            goHome();
+
+            // Задаем начальные координаты робота
+            Builder.currentPosition = new Vertex(minX + robot.Overlap, minY + robot.Overlap, minZ + robot.Overlap);
+
+            while (currentPosition.z < maxZ)
+            {
+                BuildPlaneZigzagY(ref stl, ref robot, ref currentPosition);
+                currentPosition.x = minX + robot.Overlap;
+                currentPosition.y = minY + robot.Overlap;
+                currentPosition.z = currentPosition.z + robot.HeightStep;
+            } // end while (currentZ < maxZ)
+        }
         /// <summary>
         /// Sawtooth path
         /// </summary>
         /// <param name="stl"></param>
         /// <param name="robot"></param>
         /// <param name="currentPosition"></param>
-        private static void BuildPlaneZigzag(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
+        private static void BuildPlaneZigzagX(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
         {
             while (currentPosition.x < maxX)
             {
@@ -78,6 +99,45 @@ namespace slicer.Bulder
                 UpdateData();
                 currentPosition.x = currentPosition.x + robot.Overlap;
             } // end while (currentPosition.x < maxX)
+        }
+
+        private static void BuildPlaneZigzagY(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
+        {
+            while (currentPosition.y < maxY)
+            {
+                // going right (parallel to X)
+                Vertex rayOrigin = currentPosition;
+                Vertex rayEnd = new Vertex(maxX, currentPosition.y, currentPosition.z);
+
+                // finding intersection
+                foreach (Facet facet in stl.Facets)
+                {
+                    if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                    {
+                        cache.Add(CoordinateIntersection(rayOrigin, rayEnd, facet));
+                    }
+                }
+                cache.Sort(delegate (Vertex one, Vertex two) { return one.x.CompareTo(two.x); });
+                UpdateData();
+                currentPosition.y = currentPosition.y + robot.Overlap;
+
+                // going left (parallel to X)
+                rayOrigin = currentPosition;
+                rayEnd = new Vertex(minX, currentPosition.y, currentPosition.z);
+
+                // finding intersection
+                foreach (Facet facet in stl.Facets)
+                {
+                    if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                    {
+                        cache.Add(CoordinateIntersection(rayOrigin, rayEnd, facet));
+                    }
+                }
+                cache.Sort(delegate (Vertex one, Vertex two) { return one.x.CompareTo(two.x); });
+                cache.Reverse();
+                UpdateData();
+                currentPosition.y = currentPosition.y + robot.Overlap;
+            } // end while (currentPosition.y < maxY)
         }
 
         /// <summary>
@@ -181,6 +241,13 @@ namespace slicer.Bulder
             }
             cache.Clear();
         }
-       
+
+        private static void goHome()
+        {
+            // Задаем координаты коробки с отступом от детали в половину Overlap
+            minX = stl.MinX - robot.Overlap / 2.0; maxX = stl.MaxX + robot.Overlap / 2.0;
+            minY = stl.MinY - robot.Overlap / 2.0; maxY = stl.MaxY + robot.Overlap / 2.0;
+            minZ = stl.MinZ - robot.Overlap / 2.0; maxZ = stl.MaxZ + robot.Overlap / 2.0;
+        }
     }
 }
