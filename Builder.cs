@@ -149,16 +149,16 @@ namespace slicer.Bulder
         /// <param name="facet">Any facet's vertex</param>
         /// <param name="normal">Normal to facet</param>
         /// <returns>Coordinate of intersection</returns>
-        private static Vertex CoordinateIntersection(Vertex rayEnd, Vertex rayOrigin, Facet facet)
+        private static Vertex CoordinateIntersection(Vertex rayOrigin, Vertex rayEnd, Facet facet)
         {
             Double3 normal = facet.normal;
             Vertex f = facet.vertex1;
             double tDenom = normal.x * (rayOrigin.x - rayEnd.x) + normal.y * (rayOrigin.y - rayEnd.y) + normal.z * (rayOrigin.z - rayEnd.z);
             if (Math.Abs(tDenom) < 0.00001) return null; // handle division by zero
             double d = -(normal.x * f.x + normal.y * f.y + normal.z * f.z);
-            var t = -(normal.x * rayOrigin.x + normal.y * rayOrigin.y + normal.z * rayOrigin.z + d) / tDenom;
+            var t = (normal.x * rayOrigin.x + normal.y * rayOrigin.y + normal.z * rayOrigin.z + d) / tDenom;
 
-            return new Vertex(new Double3((rayOrigin.x + t * (rayEnd.x - rayOrigin.x)), rayOrigin.y + t * (rayEnd.y - rayOrigin.y), rayOrigin.z + t * (rayEnd.z - rayOrigin.z)));
+            return new Vertex(new Double3(rayOrigin.x + t * (rayEnd.x - rayOrigin.x), rayOrigin.y + t * (rayEnd.y - rayOrigin.y), rayOrigin.z + t * (rayEnd.z - rayOrigin.z)));
         }
 
 
