@@ -3,17 +3,22 @@ using slicer.Bulder;
 using slicer.io;
 using slicer.stl;
 
-string path = "3D.stl";
-double overlap = 0.1;
-double heightStep = 0.1;
+double overlap = 0.05;
+double heightStep = 0.05;
 
-Stl stl = new Stl(path);
+
 Robot robot = new Robot(overlap, heightStep);
 
-Builder.init(stl, robot);
+Stl Cub = new Stl("Cub.stl");
+Builder.init(Cub, robot);
+Builder.AlongX();
+FileWriter.WriteVertices(Builder.globalVertex, "CubAlongX.txt");
+Builder.AlongY();
+FileWriter.WriteVertices(Builder.globalVertex, "CubAlongY.txt");
+
+Stl Cylinder = new Stl("Cylinder.stl");
+Builder.init(Cylinder, robot);
 Builder.AlongX();
 FileWriter.WriteVertices(Builder.globalVertex, "CylinderAlongX.txt");
 Builder.AlongY();
 FileWriter.WriteVertices(Builder.globalVertex, "CylinderAlongY.txt");
-
-Console.WriteLine("Program complete!");
