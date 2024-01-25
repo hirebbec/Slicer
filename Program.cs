@@ -11,9 +11,9 @@ Stl stl = new Stl(path);
 Robot robot = new Robot(overlap, heightStep);
 
 Builder.init(stl, robot);
-//Builder.ZigzagBuild();
-//FileWriter.WriteVertices(Builder.globalVertex, "Zigzag.txt");
-Builder.CrossToCrossBuild();
-FileWriter.WriteVertices(Builder.globalVertex, "CrossToCross.txt");
+Builder.AlongX();
+FileWriter.WriteVertices(Builder.globalVertex, "AlongX.txt");
+Builder.AlongY();
+FileWriter.WriteVertices(Builder.globalVertex, "AlongY.txt");
 
 Console.WriteLine("Program complete!");

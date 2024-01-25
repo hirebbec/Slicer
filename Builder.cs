@@ -21,9 +21,10 @@ namespace slicer.Bulder
         {
             Builder.stl = stl;
             Builder.robot = robot;
+            goHome();
         }
 
-        public static void ZigzagBuild()
+        public static void AlongX()
         {            
             globalVertex.Clear();
             goHome();
@@ -40,7 +41,7 @@ namespace slicer.Bulder
             } // end while (currentZ < maxZ)
         }
 
-        public static void CrossToCrossBuild()
+        public static void AlongY()
         {
             globalVertex.Clear();
             goHome();
@@ -62,7 +63,7 @@ namespace slicer.Bulder
         /// <param name="stl"></param>
         /// <param name="robot"></param>
         /// <param name="currentPosition"></param>
-        private static void BuildPlaneZigzagX(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
+        private static void BuildPlaneZigzagY(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
         {
             while (currentPosition.x < maxX)
             {
@@ -101,7 +102,7 @@ namespace slicer.Bulder
             } // end while (currentPosition.x < maxX)
         }
 
-        private static void BuildPlaneZigzagY(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
+        private static void BuildPlaneZigzagX(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
         {
             while (currentPosition.y < maxY)
             {
@@ -148,17 +149,19 @@ namespace slicer.Bulder
         /// <param name="facet">Any facet's vertex</param>
         /// <param name="normal">Normal to facet</param>
         /// <returns>Coordinate of intersection</returns>
-        private static Vertex CoordinateIntersection(Vertex rayOrigin, Vertex rayEnd, Facet facet)
+        private static Vertex CoordinateIntersection(Vertex rayEnd, Vertex rayOrigin, Facet facet)
         {
             Double3 normal = facet.normal;
             Vertex f = facet.vertex1;
             double tDenom = normal.x * (rayOrigin.x - rayEnd.x) + normal.y * (rayOrigin.y - rayEnd.y) + normal.z * (rayOrigin.z - rayEnd.z);
-            if (tDenom == 0) return null;
-            double d = -(f.x + f.y + f.z);
+            if (Math.Abs(tDenom) < 0.00001) return null; // handle division by zero
+            double d = -(normal.x * f.x + normal.y * f.y + normal.z * f.z);
             var t = -(normal.x * rayOrigin.x + normal.y * rayOrigin.y + normal.z * rayOrigin.z + d) / tDenom;
 
-            return new Vertex(new Double3(rayOrigin.x + t * (rayEnd.x - rayOrigin.x), rayOrigin.y + t * (rayEnd.y - rayOrigin.y), rayOrigin.z + t * (rayEnd.z - rayOrigin.z)));
+            return new Vertex(new Double3((rayOrigin.x + t * (rayEnd.x - rayOrigin.x)), rayOrigin.y + t * (rayEnd.y - rayOrigin.y), rayOrigin.z + t * (rayEnd.z - rayOrigin.z)));
         }
+
+
 
         /// <summary>
         /// Check whether the ray (or line patch) intersects the triangle
@@ -167,7 +170,7 @@ namespace slicer.Bulder
         /// <param name="rayEnd">Ray end</param>
         /// <param name="triVertCoords">Vertex coordinates of the triangle</param>
         /// <returns>Intersects or not</returns>
-        private static bool RayIntersectsTriangle(Vertex rayOrigin, Vertex rayEnd, Facet facet)
+        private static bool RayIntersectsTriangle(Vertex rayEnd, Vertex rayOrigin, Facet facet)
         {
             double[] sv = new double[5]; // allocate storage for 5 instances of signed volumes
             bool intersects = false;
