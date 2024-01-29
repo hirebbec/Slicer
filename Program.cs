@@ -3,27 +3,14 @@ using slicer.Bulder;
 using slicer.io;
 using slicer.stl;
 
-double overlap = 1;
-double heightStep = 1;
+double overlap = 2;
+double heightStep = 2;
 
 
 Robot robot = new Robot(overlap, heightStep);
+String name = "piston";
 
-/*Stl Cub = new Stl("Cub.st/*l");
-Builder.init(Cub, robot);
-Builder.AlongX();
-FileWriter.WriteVertices(Builder.globalVertex, "CubAlongX.txt");
-Builder.AlongY();
-FileWriter.WriteVertices(Builder.globalVertex, "CubAlongY.txt");
-
-Stl Cylinder = new Stl("Cylinder.stl");
-Builder.init(Cylinder, robot);
-Builder.AlongX();
-FileWriter.WriteVertices(Builder.globalVertex, "CylinderAlongX.txt");
-Builder.AlongY();
-FileWriter.WriteVertices(Builder.globalVertex, "CylinderAlongY.txt");*/
-
-Stl snake = new Stl("bracket.stl");
+Stl snake = new Stl(name + ".stl");
 Builder.init(snake, robot);
-Builder.AlongY();
-FileWriter.WriteVertices(Builder.globalVertex, "bracket.txt");
+Builder.AlongX();
+FileWriter.WriteVertices(Builder.globalVertex, name + ".txt");

@@ -2,6 +2,7 @@
 using slicer.stl;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -29,16 +30,42 @@ namespace slicer.Bulder
             globalVertex.Clear();
             goHome();
 
+            Stopwatch stopwatch = new Stopwatch();
+            int iterationCount = 0;
+            double totalTime = 0;
+            DateTime startTime = DateTime.Now;
+            stopwatch.Start();
+
             // Задаем начальные координаты робота
-            Builder.currentPosition = new Vertex(minX + robot.Overlap, minY + robot.Overlap, minZ + robot.Overlap);
+            Builder.currentPosition = new Vertex(minX, minY, minZ);
 
             while (currentPosition.z < maxZ)
             {
+                stopwatch.Restart();
                 BuildPlaneZigzagX(ref stl, ref robot, ref currentPosition);
-                currentPosition.x = minX + robot.Overlap;
-                currentPosition.y = minY + robot.Overlap;   
+                stopwatch.Stop();
+                totalTime += stopwatch.Elapsed.TotalSeconds;
+
+                currentPosition.x = minX;
+                currentPosition.y = minY;
                 currentPosition.z = currentPosition.z + robot.HeightStep;
+
+                iterationCount++;
+
+                double averageTimePerIteration = totalTime / iterationCount;
+                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
+
+                Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
             } // end while (currentZ < maxZ)
+
+            stopwatch.Stop();
+
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime - startTime;
+
+            Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
+            Console.WriteLine($"Количество итераций: {iterationCount}");
         }
 
         public static void AlongY()
@@ -46,16 +73,40 @@ namespace slicer.Bulder
             globalVertex.Clear();
             goHome();
 
+            Stopwatch stopwatch = new Stopwatch();
+            int iterationCount = 0;
+            double totalTime = 0;
+            DateTime startTime = DateTime.Now;
+            stopwatch.Start();
+
             // Задаем начальные координаты робота
-            Builder.currentPosition = new Vertex(minX + robot.Overlap, minY + robot.Overlap, minZ + robot.Overlap);
+            Builder.currentPosition = new Vertex(minX, minY, minZ);
 
             while (currentPosition.z < maxZ)
             {
+                stopwatch.Restart();
                 BuildPlaneZigzagY(ref stl, ref robot, ref currentPosition);
+                stopwatch.Stop();
                 currentPosition.x = minX + robot.Overlap;
                 currentPosition.y = minY + robot.Overlap;
                 currentPosition.z = currentPosition.z + robot.HeightStep;
+
+                iterationCount++;
+
+                double averageTimePerIteration = totalTime / iterationCount;
+                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
+
+                Console.Write("\rПримерное кол-во итераций: {0}", iterationsCount > 0 ? iterationsCount : 0);
+                Console.Write("\rПримерное время ожидания: {0} секунд", estimatedTimeLeft);
             } // end while (currentZ < maxZ)
+            stopwatch.Stop();
+
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime - startTime;
+
+            Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
+            Console.WriteLine($"Количество итераций: {iterationCount}");
         }
         /// <summary>
         /// Sawtooth path
@@ -244,11 +295,15 @@ namespace slicer.Bulder
         /// </summary>
         private static void UpdateData()
         {
-            for (int i = 0; i < cache.Count; i++) 
+            if (cache.Count() % 2 == 0)
             {
-                Vertex added = cache[i];
-                globalVertex.Add(added) ;
+                for (int i = 0; i < cache.Count; i++)
+                {
+                    /*Console.WriteLine(cache.Count());*/
+                    Vertex added = cache[i];
+                    globalVertex.Add(added);
 
+                }
             }
             cache.Clear();
         }
