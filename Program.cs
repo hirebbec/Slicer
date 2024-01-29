@@ -8,7 +8,7 @@ double heightStep = 1;
 
 
 Robot robot = new Robot(overlap, heightStep);
-String name = "airplane";
+String name = "piston";
 
 Stl snake = new Stl(name + ".stl");
 Builder.init(snake, robot);
