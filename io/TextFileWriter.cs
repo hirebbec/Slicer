@@ -20,10 +20,19 @@ namespace slicer.io
         /// <param name="x">Координата X.</param>
         /// <param name="y">Координата Y.</param>
         /// <param name="z">Координата Z.</param>
-        public static void GoTo(double x, double y, double z)
+        public static void GoTo(double x, double y, double z, bool flag)
         {
-            string gCode = $"G1 X{(int)(1000 * x)} Y{(int)(1000 *y)} Z{(int)(1000 * z)}";
+            string gCode = "";
+            if (flag)
+            {
+                gCode = $"G1 X{(int)(10 * x)} Y{(int)(10 * y)} Z{(int)(10 * z)};";
+
+            } else
+            {
+                gCode = $"G0 X{(int)(10 * x)} Y{(int)(10 * y)} Z{(int)(10 * z)};";
+            }
             WriteToFile(gCode);
+            //WriteToFile("M0"); TODO
         }
 
         /// <summary>
@@ -54,9 +63,11 @@ namespace slicer.io
             StreamWriter writer = new StreamWriter(filePath, false);
             writer.Close();
             FileWriter.filePath = filePath;
+            bool flag = false;
             foreach (var vertex in vertices)
             {
-                GoTo(vertex.x, vertex.y, vertex.z);
+                GoTo(vertex.x, vertex.y, vertex.z, flag);
+                flag = !flag;
             }
         }
     }

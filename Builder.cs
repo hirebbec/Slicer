@@ -76,7 +76,9 @@ namespace slicer.Bulder
                 {
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
-                        cache.Add(CoordinateIntersection(rayOrigin, rayEnd, facet));
+                        Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                        if (v != null)
+                            cache.Add(v);
                     }
                 }
                 cache.Sort(delegate (Vertex one, Vertex two) { return one.y.CompareTo(two.y); });
@@ -92,7 +94,9 @@ namespace slicer.Bulder
                 {
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
-                        cache.Add(CoordinateIntersection(rayOrigin, rayEnd, facet));
+                        Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                        if (v != null)
+                            cache.Add(v);
                     }
                 }
                 cache.Sort(delegate (Vertex one, Vertex two) { return one.y.CompareTo(two.y); });
@@ -115,7 +119,9 @@ namespace slicer.Bulder
                 {
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
-                        cache.Add(CoordinateIntersection(rayOrigin, rayEnd, facet));
+                        Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                        if (v != null)
+                            cache.Add(v);
                     }
                 }
                 cache.Sort(delegate (Vertex one, Vertex two) { return one.x.CompareTo(two.x); });
@@ -131,7 +137,9 @@ namespace slicer.Bulder
                 {
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
-                        cache.Add(CoordinateIntersection(rayOrigin, rayEnd, facet));
+                        Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                        if (v != null)
+                            cache.Add(v);
                     }
                 }
                 cache.Sort(delegate (Vertex one, Vertex two) { return one.x.CompareTo(two.x); });
