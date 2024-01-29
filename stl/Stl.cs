@@ -21,6 +21,7 @@ namespace slicer.stl
         /// <param name="filePath"> Путь к STL детали</param>
         public Stl(string filePath)
         {
+            Console.Write("Загрузка модели...");
             StructureForming(filePath);
             FindBoxCoords();
         }
