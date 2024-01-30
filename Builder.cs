@@ -39,7 +39,7 @@ namespace slicer.Bulder
             // Задаем начальные координаты робота
             Builder.currentPosition = new Vertex(minX, minY, minZ);
 
-            while (currentPosition.z < maxZ)
+            while (currentPosition.z < maxZ + robot.HeightStep)
             {
                 stopwatch.Restart();
                 BuildPlaneZigzagX(ref stl, ref robot, ref currentPosition);
@@ -82,7 +82,7 @@ namespace slicer.Bulder
             // Задаем начальные координаты робота
             Builder.currentPosition = new Vertex(minX, minY, minZ);
 
-            while (currentPosition.z < maxZ)
+            while (currentPosition.z < maxZ + robot.HeightStep)
             {
                 stopwatch.Restart();
                 BuildPlaneZigzagY(ref stl, ref robot, ref currentPosition);
@@ -116,11 +116,11 @@ namespace slicer.Bulder
         /// <param name="currentPosition"></param>
         private static void BuildPlaneZigzagY(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
         {
-            while (currentPosition.x < maxX)
+            while (currentPosition.x < maxX + robot.Overlap)
             {
                 // going up
                 Vertex rayOrigin = currentPosition;
-                Vertex rayEnd = new Vertex(currentPosition.x, maxY, currentPosition.z);
+                Vertex rayEnd = new Vertex(currentPosition.x, maxY + robot.Overlap, currentPosition.z);
 
                 // finding intersection
                 foreach (Facet facet in stl.Facets)
@@ -138,7 +138,7 @@ namespace slicer.Bulder
 
                 // going down
                 rayOrigin = currentPosition;
-                rayEnd = new Vertex(currentPosition.x, minY, currentPosition.z);
+                rayEnd = new Vertex(currentPosition.x, minY - robot.Overlap, currentPosition.z);
 
                 // finding intersection
                 foreach (Facet facet in stl.Facets)
@@ -159,11 +159,11 @@ namespace slicer.Bulder
 
         private static void BuildPlaneZigzagX(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
         {
-            while (currentPosition.y < maxY)
+            while (currentPosition.y < maxY + robot.Overlap)
             {
                 // going right (parallel to X)
                 Vertex rayOrigin = currentPosition;
-                Vertex rayEnd = new Vertex(maxX, currentPosition.y, currentPosition.z);
+                Vertex rayEnd = new Vertex(maxX + robot.Overlap, currentPosition.y, currentPosition.z);
 
                 // finding intersection
                 foreach (Facet facet in stl.Facets)
@@ -181,7 +181,7 @@ namespace slicer.Bulder
 
                 // going left (parallel to X)
                 rayOrigin = currentPosition;
-                rayEnd = new Vertex(minX, currentPosition.y, currentPosition.z);
+                rayEnd = new Vertex(minX - robot.Overlap, currentPosition.y, currentPosition.z);
 
                 // finding intersection
                 foreach (Facet facet in stl.Facets)
@@ -198,6 +198,57 @@ namespace slicer.Bulder
                 UpdateData();
                 currentPosition.y = currentPosition.y + robot.Overlap;
             } // end while (currentPosition.y < maxY)
+        }
+
+        public static void CrossToCross()
+        {
+            globalVertex.Clear();
+            goHome();
+
+            Stopwatch stopwatch = new Stopwatch();
+            int iterationCount = 0;
+            double totalTime = 0;
+            DateTime startTime = DateTime.Now;
+            stopwatch.Start();
+
+            // Задаем начальные координаты робота
+            Builder.currentPosition = new Vertex(minX, minY, minZ);
+            int i = 0;
+
+            while (currentPosition.z < maxZ + robot.HeightStep)
+            {
+                stopwatch.Restart();
+                if (i % 2 == 0)
+                {
+                    BuildPlaneZigzagX(ref stl, ref robot, ref currentPosition);
+                } else
+                {
+                    BuildPlaneZigzagY(ref stl, ref robot, ref currentPosition);
+                }
+                i++;
+                stopwatch.Stop();
+                totalTime += stopwatch.Elapsed.TotalSeconds;
+
+                currentPosition.x = minX;
+                currentPosition.y = minY;
+                currentPosition.z = currentPosition.z + robot.HeightStep;
+
+                iterationCount++;
+
+                double averageTimePerIteration = totalTime / iterationCount;
+                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
+
+                Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
+            } // end while (currentZ < maxZ)
+
+            stopwatch.Stop();
+
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime - startTime;
+
+            Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
+            Console.WriteLine($"Количество итераций: {iterationCount}");
         }
 
         /// <summary>
@@ -299,10 +350,8 @@ namespace slicer.Bulder
             {
                 for (int i = 0; i < cache.Count; i++)
                 {
-                    /*Console.WriteLine(cache.Count());*/
                     Vertex added = cache[i];
                     globalVertex.Add(added);
-
                 }
             }
             cache.Clear();
