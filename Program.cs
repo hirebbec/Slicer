@@ -3,12 +3,12 @@ using slicer.Bulder;
 using slicer.io;
 using slicer.stl;
 
-double overlap = 1;
-double heightStep = 1;
+double overlap = 0.01;
+double heightStep = 0.01;
 
 
 Robot robot = new Robot(overlap, heightStep);
-String name = "piston";
+String name = "human";
 
 Stl snake = new Stl(name + ".stl");
 Builder.init(snake, robot);
