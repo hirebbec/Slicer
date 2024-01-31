@@ -4,11 +4,11 @@ using slicer.io;
 using slicer.stl;
 
 double overlap = 0.01;
-double heightStep = 0.01;
+double heightStep = 0.05;
 
 
 Robot robot = new Robot(overlap, heightStep);
-String name = "human";
+String name = "Tower";
 
 Stl snake = new Stl(name + ".stl");
 Builder.init(snake, robot);

@@ -25,11 +25,11 @@ namespace slicer.io
             string gCode = "";
             if (flag)
             {
-                gCode = $"G1 X{(int)(10 * x)} Y{(int)(10 * y)} Z{(int)(10 * z)};";
+                gCode = $"G1 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};";
 
             } else
             {
-                gCode = $"G0 X{(int)(10 * x)} Y{(int)(10 * y)} Z{(int)(10 * z)};";
+                gCode = $"G0 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};";
             }
             WriteToFile(gCode);
             //WriteToFile("M0"); TODO
