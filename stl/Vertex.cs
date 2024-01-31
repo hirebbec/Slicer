@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace slicer.stl
 {
-    public class Vertex
+    public class Vertex : ICloneable
     {
         public double x, y, z;
 
@@ -38,6 +38,11 @@ namespace slicer.stl
             this.x = coord1;
             this.y = coord2;
             this.z = coord3;
+        }
+
+        public object Clone()
+        {
+            return new Vertex(x, y, z);
         }
     }
 }
