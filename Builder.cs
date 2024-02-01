@@ -39,7 +39,7 @@ namespace slicer.Bulder
             // Задаем начальные координаты робота
             Builder.currentPosition = new Vertex(minX, minY, minZ);
 
-            while (currentPosition.z < maxZ + robot.HeightStep)
+            while (currentPosition.z < maxZ)
             {
                 stopwatch.Restart();
                 BuildPlaneZigzagX(ref stl, stl.Facets, ref robot, ref currentPosition);
@@ -82,7 +82,7 @@ namespace slicer.Bulder
             // Задаем начальные координаты робота
             Builder.currentPosition = new Vertex(minX, minY, minZ);
 
-            while (currentPosition.z < maxZ + robot.HeightStep)
+            while (currentPosition.z < maxZ)
             {
                 stopwatch.Restart();
                 BuildPlaneZigzagY(ref stl, stl.Facets, ref robot, ref currentPosition);
@@ -116,11 +116,11 @@ namespace slicer.Bulder
         /// <param name="currentPosition"></param>
         private static void BuildPlaneZigzagY(ref Stl stl, List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
         {
-            while (currentPosition.x < maxX + robot.Overlap)
+            while (currentPosition.x < maxX)
             {
                 // going up
                 Vertex rayOrigin = currentPosition;
-                Vertex rayEnd = new Vertex(currentPosition.x, maxY + robot.Overlap, currentPosition.z);
+                Vertex rayEnd = new Vertex(currentPosition.x, maxY, currentPosition.z);
 
                 // finding intersection
                 for (int i = 0; i < facets.Count(); i++)
@@ -149,7 +149,7 @@ namespace slicer.Bulder
 
                 // going down
                 rayOrigin = currentPosition;
-                rayEnd = new Vertex(currentPosition.x, minY - robot.Overlap, currentPosition.z);
+                rayEnd = new Vertex(currentPosition.x, minY, currentPosition.z);
 
                 // finding intersection
                 foreach (Facet facet in facets)
@@ -170,11 +170,11 @@ namespace slicer.Bulder
 
         private static void BuildPlaneZigzagX(ref Stl stl, List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
         {
-            while (currentPosition.y < maxY + robot.Overlap)
+            while (currentPosition.y < maxY)
             {
                 // going right (parallel to X)
                 Vertex rayOrigin = currentPosition;
-                Vertex rayEnd = new Vertex(maxX + robot.Overlap, currentPosition.y, currentPosition.z);
+                Vertex rayEnd = new Vertex(maxX, currentPosition.y, currentPosition.z);
 
                 // finding intersection
                 for (int i = 0; i < facets.Count(); i++)
@@ -203,7 +203,7 @@ namespace slicer.Bulder
 
                 // going left (parallel to X)
                 rayOrigin = currentPosition;
-                rayEnd = new Vertex(minX - robot.Overlap, currentPosition.y, currentPosition.z);
+                rayEnd = new Vertex(minX, currentPosition.y, currentPosition.z);
 
                 // finding intersection
                 foreach (Facet facet in facets)
@@ -237,7 +237,7 @@ namespace slicer.Bulder
             Builder.currentPosition = new Vertex(minX, minY, minZ);
             int i = 0;
 
-            while (currentPosition.z < maxZ + robot.HeightStep)
+            while (currentPosition.z < maxZ)
             {
                 stopwatch.Restart();
                 if (i % 2 == 0)
@@ -382,9 +382,9 @@ namespace slicer.Bulder
         private static void goHome()
         {
             // Задаем координаты коробки с отступом от детали в половину Overlap
-            minX = stl.MinX - robot.Overlap / 2.0; maxX = stl.MaxX + robot.Overlap / 2.0;
-            minY = stl.MinY - robot.Overlap / 2.0; maxY = stl.MaxY + robot.Overlap / 2.0;
-            minZ = stl.MinZ - robot.Overlap / 2.0; maxZ = stl.MaxZ + robot.Overlap / 2.0;
+            minX = stl.MinX - robot.Overlap; maxX = stl.MaxX + robot.Overlap;
+            minY = stl.MinY - robot.Overlap; maxY = stl.MaxY + robot.Overlap;
+            minZ = stl.MinZ - robot.Overlap; maxZ = stl.MaxZ + robot.Overlap;
         }
     }
 }
