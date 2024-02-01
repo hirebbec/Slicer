@@ -42,7 +42,7 @@ namespace slicer.Bulder
             while (currentPosition.z < maxZ + robot.HeightStep)
             {
                 stopwatch.Restart();
-                BuildPlaneZigzagX(stl.Facets, ref robot, ref currentPosition);
+                BuildPlaneZigzagX(ref stl, stl.Facets, ref robot, ref currentPosition);
                 stopwatch.Stop();
                 totalTime += stopwatch.Elapsed.TotalSeconds;
 
@@ -85,7 +85,7 @@ namespace slicer.Bulder
             while (currentPosition.z < maxZ + robot.HeightStep)
             {
                 stopwatch.Restart();
-                BuildPlaneZigzagY(stl.Facets, ref robot, ref currentPosition);
+                BuildPlaneZigzagY(ref stl, stl.Facets, ref robot, ref currentPosition);
                 stopwatch.Stop();
                 currentPosition.x = minX + robot.Overlap;
                 currentPosition.y = minY + robot.Overlap;
@@ -114,7 +114,7 @@ namespace slicer.Bulder
         /// <param name="stl"></param>
         /// <param name="robot"></param>
         /// <param name="currentPosition"></param>
-        private static void BuildPlaneZigzagY(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void BuildPlaneZigzagY(ref Stl stl, List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
         {
             while (currentPosition.x < maxX + robot.Overlap)
             {
@@ -126,13 +126,15 @@ namespace slicer.Bulder
                 for (int i = 0; i < facets.Count(); i++)
                 {
                     Facet facet = facets[i];
-                    if (facet.vertex1.z < currentPosition.z && facet.vertex2.z < currentPosition.z && facet.vertex3.z < currentPosition.z)
+                    if (stl.Facets.Count() > i && stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
                     {
-                        facets.Remove(facet);
+                        stl.Facets.RemoveAt(i);
                     }
                     if (facet.vertex1.x < currentPosition.x && facet.vertex2.x < currentPosition.x && facet.vertex3.x < currentPosition.x)
                     {
-                        facets.Remove(facet);
+                        facets.RemoveAt(i);
+                        i--;
+                        continue;
                     }
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
@@ -166,7 +168,7 @@ namespace slicer.Bulder
             } // end while (currentPosition.x < maxX)
         }
 
-        private static void BuildPlaneZigzagX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void BuildPlaneZigzagX(ref Stl stl, List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
         {
             while (currentPosition.y < maxY + robot.Overlap)
             {
@@ -178,13 +180,15 @@ namespace slicer.Bulder
                 for (int i = 0; i < facets.Count(); i++)
                 {
                     Facet facet = facets[i];
-                    if (facet.vertex1.z < currentPosition.z && facet.vertex2.z < currentPosition.z && facet.vertex3.z < currentPosition.z)
+                    if (stl.Facets.Count() > i && stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
                     {
-                        facets.Remove(facet);
+                        stl.Facets.RemoveAt(i);
                     }
                     if (facet.vertex1.y < currentPosition.y && facet.vertex2.y < currentPosition.y && facet.vertex3.y < currentPosition.y)
                     {
-                        facets.Remove(facet);
+                        facets.RemoveAt(i);
+                        i--;
+                        continue;
                     }
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
@@ -238,10 +242,10 @@ namespace slicer.Bulder
                 stopwatch.Restart();
                 if (i % 2 == 0)
                 {
-                    BuildPlaneZigzagX(stl.getFacets(), ref robot, ref currentPosition);
+                    BuildPlaneZigzagX(ref stl, stl.getFacets(), ref robot, ref currentPosition);
                 } else
                 {
-                    BuildPlaneZigzagY(stl.getFacets(), ref robot, ref currentPosition);
+                    BuildPlaneZigzagY(ref stl, stl.getFacets(), ref robot, ref currentPosition);
                 }
                 i++;
                 stopwatch.Stop();
