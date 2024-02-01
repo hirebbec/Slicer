@@ -42,7 +42,7 @@ namespace slicer.Bulder
             while (currentPosition.z < maxZ)
             {
                 stopwatch.Restart();
-                BuildPlaneZigzagX(ref stl, ref robot, ref currentPosition);
+                BuildPlaneZigzagX(ref stl, stl.Facets, ref robot, ref currentPosition);
                 stopwatch.Stop();
                 totalTime += stopwatch.Elapsed.TotalSeconds;
 
@@ -85,7 +85,7 @@ namespace slicer.Bulder
             while (currentPosition.z < maxZ)
             {
                 stopwatch.Restart();
-                BuildPlaneZigzagY(ref stl, ref robot, ref currentPosition);
+                BuildPlaneZigzagY(ref stl, stl.Facets, ref robot, ref currentPosition);
                 stopwatch.Stop();
                 currentPosition.x = minX + robot.Overlap;
                 currentPosition.y = minY + robot.Overlap;
@@ -114,7 +114,7 @@ namespace slicer.Bulder
         /// <param name="stl"></param>
         /// <param name="robot"></param>
         /// <param name="currentPosition"></param>
-        private static void BuildPlaneZigzagY(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
+        private static void BuildPlaneZigzagY(ref Stl stl, List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
         {
             while (currentPosition.x < maxX)
             {
@@ -123,8 +123,19 @@ namespace slicer.Bulder
                 Vertex rayEnd = new Vertex(currentPosition.x, maxY, currentPosition.z);
 
                 // finding intersection
-                foreach (Facet facet in stl.Facets)
+                for (int i = 0; i < facets.Count(); i++)
                 {
+                    Facet facet = facets[i];
+                    if (stl.Facets.Count() > i && stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.RemoveAt(i);
+                    }
+                    if (facet.vertex1.x < currentPosition.x && facet.vertex2.x < currentPosition.x && facet.vertex3.x < currentPosition.x)
+                    {
+                        facets.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
                         Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
@@ -141,7 +152,7 @@ namespace slicer.Bulder
                 rayEnd = new Vertex(currentPosition.x, minY, currentPosition.z);
 
                 // finding intersection
-                foreach (Facet facet in stl.Facets)
+                foreach (Facet facet in facets)
                 {
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
@@ -157,7 +168,7 @@ namespace slicer.Bulder
             } // end while (currentPosition.x < maxX)
         }
 
-        private static void BuildPlaneZigzagX(ref Stl stl, ref Robot robot, ref Vertex currentPosition)
+        private static void BuildPlaneZigzagX(ref Stl stl, List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
         {
             while (currentPosition.y < maxY)
             {
@@ -166,8 +177,19 @@ namespace slicer.Bulder
                 Vertex rayEnd = new Vertex(maxX, currentPosition.y, currentPosition.z);
 
                 // finding intersection
-                foreach (Facet facet in stl.Facets)
+                for (int i = 0; i < facets.Count(); i++)
                 {
+                    Facet facet = facets[i];
+                    if (stl.Facets.Count() > i && stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.RemoveAt(i);
+                    }
+                    if (facet.vertex1.y < currentPosition.y && facet.vertex2.y < currentPosition.y && facet.vertex3.y < currentPosition.y)
+                    {
+                        facets.RemoveAt(i);
+                        i--;
+                        continue;
+                    }
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
                         Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
@@ -184,7 +206,7 @@ namespace slicer.Bulder
                 rayEnd = new Vertex(minX, currentPosition.y, currentPosition.z);
 
                 // finding intersection
-                foreach (Facet facet in stl.Facets)
+                foreach (Facet facet in facets)
                 {
                     if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
                     {
@@ -220,10 +242,10 @@ namespace slicer.Bulder
                 stopwatch.Restart();
                 if (i % 2 == 0)
                 {
-                    BuildPlaneZigzagY(ref stl, ref robot, ref currentPosition);
+                    BuildPlaneZigzagX(ref stl, stl.getFacets(), ref robot, ref currentPosition);
                 } else
                 {
-                    BuildPlaneZigzagX(ref stl, ref robot, ref currentPosition);
+                    BuildPlaneZigzagY(ref stl, stl.getFacets(), ref robot, ref currentPosition);
                 }
                 i++;
                 stopwatch.Stop();
