@@ -21,6 +21,7 @@ namespace slicer.stl
         /// <param name="filePath"> Путь к STL детали</param>
         public Stl(string filePath)
         {
+            Console.Write("Загрузка модели...");
             StructureForming(filePath);
             FindBoxCoords();
         }
@@ -136,6 +137,18 @@ namespace slicer.stl
 
             _minX = minx; _minY = miny; _minZ = minz;
             _maxX = maxx; _maxY = maxy; _maxZ = maxz;
+        }
+
+        public List<Facet> getFacets()
+        {
+            List<Facet> copy = new List<Facet>();
+
+            foreach (var item in _facets)
+            {
+                copy.Add((Facet)item.Clone());
+            }
+
+            return copy;
         }
     }
 }

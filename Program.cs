@@ -1,14 +1,16 @@
 ﻿using slicer;
 using slicer.Bulder;
+using slicer.io;
 using slicer.stl;
 
-string path = $"test.stl";
-double overlap = 0.1;
-double heightStep = 0.1;
+double overlap = 0.025;
+double heightStep = 0.025;
 
-Stl stl = new Stl(path);
+
 Robot robot = new Robot(overlap, heightStep);
+String name = "airplane";
 
-Builder.StartBuid(stl, robot);
-
-Console.WriteLine("Program complete!");
+Stl snake = new Stl("./../../../models/" + name + ".stl");
+Builder.init(snake, robot);
+Builder.CrossToCross();
+FileWriter.WriteVertices(Builder.globalVertex, "./../../../results/" + name + ".txt");

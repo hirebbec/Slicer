@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace slicer.construct
 {
-    public struct Double3
+    public struct Double3: ICloneable
     {
         public double x;
         public double y;
@@ -261,6 +261,11 @@ namespace slicer.construct
                 (T)Convert.ChangeType(y, typeof(T)),
                 (T)Convert.ChangeType(z, typeof(T))
             };
+        }
+
+        public object Clone()
+        {
+            return new Double3(x, y, z);
         }
     }
 }

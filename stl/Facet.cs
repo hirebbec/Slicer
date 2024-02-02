@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace slicer.stl
 {
-    public class Facet
+    public class Facet: ICloneable
     {
         public Double3 normal;
         public Vertex vertex1, vertex2, vertex3;
@@ -20,6 +20,11 @@ namespace slicer.stl
             this.vertex3 = vertex3;
             this.normal = normal;
             this.number = number;
+        }
+
+        public object Clone()
+        {
+            return new Facet(vertex1, vertex2, vertex3, normal, number);
         }
     }
 }
