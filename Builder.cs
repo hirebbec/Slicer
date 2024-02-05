@@ -1,12 +1,6 @@
 ﻿using slicer.construct;
 using slicer.stl;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace slicer.Bulder
 {
@@ -24,8 +18,7 @@ namespace slicer.Bulder
             Builder.robot = robot;
             goHome();
         }
-
-        public static void AlongX()
+        public static void BuildPlaneX()
         {            
             globalVertex.Clear();
             goHome();
@@ -38,11 +31,27 @@ namespace slicer.Bulder
 
             // Задаем начальные координаты робота
             Builder.currentPosition = new Vertex(minX, minY, minZ);
+            bool flag = false;
 
             while (currentPosition.z < maxZ)
             {
+                for (int i = 0; i < stl.Facets.Count(); i++)
+                {
+                    if (stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.Remove(stl.Facets[i]);
+                        i--;
+                    }
+                }
+
                 stopwatch.Restart();
-                BuildPlaneZigzagX(ref stl, stl.Facets, ref robot, ref currentPosition);
+                AlongX(stl.getFacets(), ref robot, ref currentPosition);
+                if (flag)
+                {
+                    cache.Reverse();
+                }
+                flag = !flag;
+                UpdateData();
                 stopwatch.Stop();
                 totalTime += stopwatch.Elapsed.TotalSeconds;
 
@@ -67,8 +76,134 @@ namespace slicer.Bulder
             Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
             Console.WriteLine($"Количество итераций: {iterationCount}");
         }
+        public static void BuildPlaneReverseX()
+        {
+            globalVertex.Clear();
+            goHome();
 
-        public static void AlongY()
+            Stopwatch stopwatch = new Stopwatch();
+            int iterationCount = 0;
+            double totalTime = 0;
+            DateTime startTime = DateTime.Now;
+            stopwatch.Start();
+
+            // Задаем начальные координаты робота
+            Builder.currentPosition = new Vertex(maxX, minY, minZ);
+            bool flag = false;
+
+            while (currentPosition.z < maxZ)
+            {
+                for (int i = 0; i < stl.Facets.Count(); i++)
+                {
+                    if (stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.Remove(stl.Facets[i]);
+                        i--;
+                    }
+                }
+
+                stopwatch.Restart();
+                AlongReverseX(stl.getFacets(), ref robot, ref currentPosition);
+                if (flag)
+                {
+                    cache.Reverse();
+                }
+                flag = !flag;
+                UpdateData();
+                stopwatch.Stop();
+                totalTime += stopwatch.Elapsed.TotalSeconds;
+
+                currentPosition.x = maxX;
+                currentPosition.y = minY;
+                currentPosition.z = currentPosition.z + robot.HeightStep;
+
+                iterationCount++;
+
+                double averageTimePerIteration = totalTime / iterationCount;
+                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
+
+                Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
+            } // end while (currentZ < maxZ)
+
+            stopwatch.Stop();
+
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime - startTime;
+
+            Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
+            Console.WriteLine($"Количество итераций: {iterationCount}");
+        }
+        private static void rayX(List<Facet> facets)
+        {
+            // going right (parallel to X)
+            Vertex rayOrigin = currentPosition;
+            Vertex rayEnd = new Vertex(maxX, currentPosition.y, currentPosition.z);
+
+            // finding intersection
+            foreach (Facet facet in facets)
+            {
+                if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                {
+                    Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                    if (v != null)
+                        cache.Add(v);
+                }
+            }
+        }
+        private static void rayReverseX(List<Facet> facets)
+        {
+            // going left (parallel to X)
+            Vertex rayOrigin = currentPosition;
+            Vertex rayEnd = new Vertex(minX, currentPosition.y, currentPosition.z);
+            List<Vertex> tmp = new List<Vertex>();
+
+            // finding intersection
+            foreach (Facet facet in facets)
+            {
+                if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                {
+                    Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                    if (v != null)
+                        tmp.Add(v);
+                }
+            }
+            tmp.Reverse();
+            cache.AddRange(tmp);
+        }
+        private static void AlongX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        {
+            while (currentPosition.y < maxY)
+            {
+                for (int i = 0; i < facets.Count(); i++)
+                {
+                    if (facets[i].vertex1.y < currentPosition.y && facets[i].vertex2.y < currentPosition.y && facets[i].vertex3.y < currentPosition.y)
+                    {
+                        facets.Remove(facets[i]);
+                        i--;
+                    }
+                }
+                rayX(facets);
+                currentPosition.y = currentPosition.y + robot.Overlap;
+            }
+        }
+        private static void AlongReverseX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        {
+            while (currentPosition.y < maxY)
+            {
+                for (int i = 0; i < facets.Count(); i++)
+                {
+                    if (facets[i].vertex1.y < currentPosition.y && facets[i].vertex2.y < currentPosition.y && facets[i].vertex3.y < currentPosition.y)
+                    {
+                        facets.Remove(facets[i]);
+                        i--;
+                    }
+                }
+                rayReverseX(facets);
+                currentPosition.y = currentPosition.y + robot.Overlap;
+            }
+        }
+        public static void BuildPlaneY()
         {
             globalVertex.Clear();
             goHome();
@@ -81,14 +216,32 @@ namespace slicer.Bulder
 
             // Задаем начальные координаты робота
             Builder.currentPosition = new Vertex(minX, minY, minZ);
+            bool flag = false;
 
             while (currentPosition.z < maxZ)
             {
+                for (int i = 0; i < stl.Facets.Count(); i++)
+                {
+                    if (stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.Remove(stl.Facets[i]);
+                        i--;
+                    }
+                }
+
                 stopwatch.Restart();
-                BuildPlaneZigzagY(ref stl, stl.Facets, ref robot, ref currentPosition);
+                AlongY(stl.getFacets(), ref robot, ref currentPosition);
+                if (flag)
+                {
+                    cache.Reverse();
+                }
+                flag = !flag;
+                UpdateData();
                 stopwatch.Stop();
-                currentPosition.x = minX + robot.Overlap;
-                currentPosition.y = minY + robot.Overlap;
+                totalTime += stopwatch.Elapsed.TotalSeconds;
+
+                currentPosition.x = minX;
+                currentPosition.y = minY;
                 currentPosition.z = currentPosition.z + robot.HeightStep;
 
                 iterationCount++;
@@ -97,9 +250,9 @@ namespace slicer.Bulder
                 double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
                 double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
 
-                Console.Write("\rПримерное кол-во итераций: {0}", iterationsCount > 0 ? iterationsCount : 0);
-                Console.Write("\rПримерное время ожидания: {0} секунд", estimatedTimeLeft);
+                Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
             } // end while (currentZ < maxZ)
+
             stopwatch.Stop();
 
             DateTime endTime = DateTime.Now;
@@ -108,121 +261,132 @@ namespace slicer.Bulder
             Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
             Console.WriteLine($"Количество итераций: {iterationCount}");
         }
-        /// <summary>
-        /// Sawtooth path
-        /// </summary>
-        /// <param name="stl"></param>
-        /// <param name="robot"></param>
-        /// <param name="currentPosition"></param>
-        private static void BuildPlaneZigzagY(ref Stl stl, List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        public static void BuildPlaneReverseY()
+        {
+            globalVertex.Clear();
+            goHome();
+
+            Stopwatch stopwatch = new Stopwatch();
+            int iterationCount = 0;
+            double totalTime = 0;
+            DateTime startTime = DateTime.Now;
+            stopwatch.Start();
+
+            // Задаем начальные координаты робота
+            Builder.currentPosition = new Vertex(minX, maxY, minZ);
+            bool flag = false;
+
+            while (currentPosition.z < maxZ)
+            {
+                for (int i = 0; i < stl.Facets.Count(); i++)
+                {
+                    if (stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.Remove(stl.Facets[i]);
+                        i--;
+                    }
+                }
+
+                stopwatch.Restart();
+                AlongReverseY(stl.getFacets(), ref robot, ref currentPosition);
+                if (flag)
+                {
+                    cache.Reverse();
+                }
+                flag = !flag;
+                stopwatch.Stop();
+                totalTime += stopwatch.Elapsed.TotalSeconds;
+
+                currentPosition.x = minX;
+                currentPosition.y = maxY;
+                currentPosition.z = currentPosition.z + robot.HeightStep;
+
+                iterationCount++;
+
+                double averageTimePerIteration = totalTime / iterationCount;
+                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
+
+                Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
+            } // end while (currentZ < maxZ)
+
+            stopwatch.Stop();
+
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime - startTime;
+
+            Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
+            Console.WriteLine($"Количество итераций: {iterationCount}");
+        }
+        private static void AlongY(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
         {
             while (currentPosition.x < maxX)
             {
-                // going up
-                Vertex rayOrigin = currentPosition;
-                Vertex rayEnd = new Vertex(currentPosition.x, maxY, currentPosition.z);
-
-                // finding intersection
                 for (int i = 0; i < facets.Count(); i++)
                 {
-                    Facet facet = facets[i];
-                    if (stl.Facets.Count() > i && stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
+                    if (facets[i].vertex1.x < currentPosition.x && facets[i].vertex2.x < currentPosition.x && facets[i].vertex3.x < currentPosition.x)
                     {
-                        stl.Facets.RemoveAt(i);
-                    }
-                    if (facet.vertex1.x < currentPosition.x && facet.vertex2.x < currentPosition.x && facet.vertex3.x < currentPosition.x)
-                    {
-                        facets.RemoveAt(i);
+                        facets.Remove(facets[i]);
                         i--;
-                        continue;
-                    }
-                    if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
-                    {
-                        Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
-                        if (v != null)
-                            cache.Add(v);
                     }
                 }
-                cache.Sort(delegate (Vertex one, Vertex two) { return one.y.CompareTo(two.y); });
-                UpdateData();
+                rayY(facets);
                 currentPosition.x = currentPosition.x + robot.Overlap;
-
-                // going down
-                rayOrigin = currentPosition;
-                rayEnd = new Vertex(currentPosition.x, minY, currentPosition.z);
-
-                // finding intersection
-                foreach (Facet facet in facets)
-                {
-                    if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
-                    {
-                        Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
-                        if (v != null)
-                            cache.Add(v);
-                    }
-                }
-                cache.Sort(delegate (Vertex one, Vertex two) { return one.y.CompareTo(two.y); });
-                cache.Reverse();
-                UpdateData();
-                currentPosition.x = currentPosition.x + robot.Overlap;
-            } // end while (currentPosition.x < maxX)
+            }
         }
-
-        private static void BuildPlaneZigzagX(ref Stl stl, List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void AlongReverseY(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
         {
-            while (currentPosition.y < maxY)
+            while (currentPosition.x < maxX)
             {
-                // going right (parallel to X)
-                Vertex rayOrigin = currentPosition;
-                Vertex rayEnd = new Vertex(maxX, currentPosition.y, currentPosition.z);
-
-                // finding intersection
                 for (int i = 0; i < facets.Count(); i++)
                 {
-                    Facet facet = facets[i];
-                    if (stl.Facets.Count() > i && stl.Facets[i].vertex1.z < currentPosition.z && stl.Facets[i].vertex2.z < currentPosition.z && stl.Facets[i].vertex3.z < currentPosition.z)
+                    if (facets[i].vertex1.x < currentPosition.x && facets[i].vertex2.x < currentPosition.x && facets[i].vertex3.x < currentPosition.x)
                     {
-                        stl.Facets.RemoveAt(i);
-                    }
-                    if (facet.vertex1.y < currentPosition.y && facet.vertex2.y < currentPosition.y && facet.vertex3.y < currentPosition.y)
-                    {
-                        facets.RemoveAt(i);
+                        facets.Remove(facets[i]);
                         i--;
-                        continue;
-                    }
-                    if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
-                    {
-                        Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
-                        if (v != null)
-                            cache.Add(v);
                     }
                 }
-                cache.Sort(delegate (Vertex one, Vertex two) { return one.x.CompareTo(two.x); });
-                UpdateData();
-                currentPosition.y = currentPosition.y + robot.Overlap;
-
-                // going left (parallel to X)
-                rayOrigin = currentPosition;
-                rayEnd = new Vertex(minX, currentPosition.y, currentPosition.z);
-
-                // finding intersection
-                foreach (Facet facet in facets)
-                {
-                    if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
-                    {
-                        Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
-                        if (v != null)
-                            cache.Add(v);
-                    }
-                }
-                cache.Sort(delegate (Vertex one, Vertex two) { return one.x.CompareTo(two.x); });
-                cache.Reverse();
-                UpdateData();
-                currentPosition.y = currentPosition.y + robot.Overlap;
-            } // end while (currentPosition.y < maxY)
+                rayReverseY(facets);
+                currentPosition.x = currentPosition.x + robot.Overlap;
+            }
         }
+        private static void rayY(List<Facet> facets)
+        {
+            // going right (parallel to X)
+            Vertex rayOrigin = currentPosition;
+            Vertex rayEnd = new Vertex(currentPosition.x, maxY, currentPosition.z);
 
-        public static void CrossToCross()
+            // finding intersection
+            foreach (Facet facet in facets)
+            {
+                if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                {
+                    Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                    if (v != null)
+                        cache.Add(v);
+                }
+            }
+        }
+        private static void rayReverseY(List<Facet> facets)
+        {
+            // going right (parallel to X)
+            Vertex rayOrigin = currentPosition;
+            Vertex rayEnd = new Vertex(currentPosition.x, minY, currentPosition.z);
+            List<Vertex> tmp = new List<Vertex>();
+            // finding intersection
+            foreach (Facet facet in facets)
+            {
+                if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                {
+                    Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                    if (v != null)
+                        tmp.Add(v);
+                }
+            }
+            tmp.Reverse();
+            cache.AddRange(tmp);
+        }
+        public static void BuildPlaneCrossToCross()
         {
             globalVertex.Clear();
             goHome();
@@ -239,15 +403,81 @@ namespace slicer.Bulder
 
             while (currentPosition.z < maxZ)
             {
+                for (int j = 0; j < stl.Facets.Count(); j++)
+                {
+                    if (stl.Facets[j].vertex1.z < currentPosition.z && stl.Facets[j].vertex2.z < currentPosition.z && stl.Facets[j].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.Remove(stl.Facets[j]);
+                        j--;
+                    }
+                }
                 stopwatch.Restart();
                 if (i % 2 == 0)
                 {
-                    BuildPlaneZigzagX(ref stl, stl.getFacets(), ref robot, ref currentPosition);
+                    AlongX(stl.getFacets(), ref robot, ref currentPosition);
                 } else
                 {
-                    BuildPlaneZigzagY(ref stl, stl.getFacets(), ref robot, ref currentPosition);
+                    AlongY(stl.getFacets(), ref robot, ref currentPosition);
                 }
                 i++;
+                stopwatch.Stop();
+                totalTime += stopwatch.Elapsed.TotalSeconds;
+                UpdateData();
+
+                currentPosition.x = minX;
+                currentPosition.y = minY;
+                currentPosition.z = currentPosition.z + robot.HeightStep;
+
+                iterationCount++;
+
+                double averageTimePerIteration = totalTime / iterationCount;
+                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
+
+                Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
+            } // end while (currentZ < maxZ)
+
+            stopwatch.Stop();
+
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime - startTime;
+
+            Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
+            Console.WriteLine($"Количество итераций: {iterationCount}");
+        }
+        public static void BuildPlaneSnakeX()
+        {
+            globalVertex.Clear();
+            goHome();
+
+            Stopwatch stopwatch = new Stopwatch();
+            int iterationCount = 0;
+            double totalTime = 0;
+            DateTime startTime = DateTime.Now;
+            stopwatch.Start();
+
+            // Задаем начальные координаты робота
+            Builder.currentPosition = new Vertex(minX, minY, minZ);
+            bool flag = false;
+
+            while (currentPosition.z < maxZ)
+            {
+                for (int j = 0; j < stl.Facets.Count(); j++)
+                {
+                    if (stl.Facets[j].vertex1.z < currentPosition.z && stl.Facets[j].vertex2.z < currentPosition.z && stl.Facets[j].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.Remove(stl.Facets[j]);
+                        j--;
+                    }
+                }
+                stopwatch.Restart();
+                SnakeX(stl.getFacets(), ref robot, ref currentPosition);
+                if (flag)
+                {
+                    cache.Reverse();
+                }
+                flag = !flag;
+                UpdateData();
                 stopwatch.Stop();
                 totalTime += stopwatch.Elapsed.TotalSeconds;
 
@@ -272,15 +502,116 @@ namespace slicer.Bulder
             Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
             Console.WriteLine($"Количество итераций: {iterationCount}");
         }
+        private static void SnakeX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        {
+            int j = 0;
+            while (currentPosition.y < maxY)
+            {
+                for (int i = 0; i < facets.Count(); i++)
+                {
+                    if (facets[i].vertex1.y < currentPosition.y && facets[i].vertex2.y < currentPosition.y && facets[i].vertex3.y < currentPosition.y)
+                    {
+                        facets.Remove(facets[i]);
+                        i--;
+                    }
+                }
+                if (j % 2 == 0)
+                {
+                    rayX(facets);
+                    currentPosition.x = maxX;
+                } else
+                {
+                    rayReverseX(facets);
+                    currentPosition.x = minX;
+                }
+                j++;
+                currentPosition.y = currentPosition.y + robot.Overlap;
+            }
+        }
+        public static void BuildPlaneSnakeY()
+        {
+            globalVertex.Clear();
+            goHome();
 
-        /// <summary>
-        /// Find intersection coordinates
-        /// </summary>
-        /// <param name="rayOrigin">Ray start</param>
-        /// <param name="prayEnd">Ray end</param>
-        /// <param name="facet">Any facet's vertex</param>
-        /// <param name="normal">Normal to facet</param>
-        /// <returns>Coordinate of intersection</returns>
+            Stopwatch stopwatch = new Stopwatch();
+            int iterationCount = 0;
+            double totalTime = 0;
+            DateTime startTime = DateTime.Now;
+            stopwatch.Start();
+
+            // Задаем начальные координаты робота
+            Builder.currentPosition = new Vertex(minX, minY, minZ);
+            bool flag = false;
+
+            while (currentPosition.z < maxZ)
+            {
+                for (int j = 0; j < stl.Facets.Count(); j++)
+                {
+                    if (stl.Facets[j].vertex1.z < currentPosition.z && stl.Facets[j].vertex2.z < currentPosition.z && stl.Facets[j].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.Remove(stl.Facets[j]);
+                        j--;
+                    }
+                }
+                stopwatch.Restart();
+                SnakeY(stl.getFacets(), ref robot, ref currentPosition);
+                if (flag)
+                {
+                    cache.Reverse();
+                }
+                flag = !flag;
+                UpdateData();
+                stopwatch.Stop();
+                totalTime += stopwatch.Elapsed.TotalSeconds;
+
+                currentPosition.x = minX;
+                currentPosition.y = minY;
+                currentPosition.z = currentPosition.z + robot.HeightStep;
+
+                iterationCount++;
+
+                double averageTimePerIteration = totalTime / iterationCount;
+                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
+
+                Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
+            } // end while (currentZ < maxZ)
+
+            stopwatch.Stop();
+
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime - startTime;
+
+            Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
+            Console.WriteLine($"Количество итераций: {iterationCount}");
+        }
+        private static void SnakeY(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        {
+            int j = 0;
+            while (currentPosition.x < maxX)
+            {
+                for (int i = 0; i < facets.Count(); i++)
+                {
+                    if (facets[i].vertex1.x < currentPosition.x && facets[i].vertex2.x < currentPosition.x && facets[i].vertex3.x < currentPosition.x)
+                    {
+                        facets.Remove(facets[i]);
+                        i--;
+                    }
+                }
+                if (j % 2 == 0)
+                {
+                    rayY(facets);
+                    currentPosition.y = maxY;
+                }
+                else
+                {
+                    rayReverseY(facets);
+                    currentPosition.y = minY;
+                }
+                j++;
+                currentPosition.x = currentPosition.x + robot.Overlap;
+            }
+        }
         private static Vertex CoordinateIntersection(Vertex rayOrigin, Vertex rayEnd, Facet facet)
         {
             Double3 normal = facet.normal;
@@ -292,16 +623,6 @@ namespace slicer.Bulder
 
             return new Vertex(new Double3(rayOrigin.x + t * (rayEnd.x - rayOrigin.x), rayOrigin.y + t * (rayEnd.y - rayOrigin.y), rayOrigin.z + t * (rayEnd.z - rayOrigin.z)));
         }
-
-
-
-        /// <summary>
-        /// Check whether the ray (or line patch) intersects the triangle
-        /// </summary>
-        /// <param name="rayOrigin">Ray start</param>
-        /// <param name="rayEnd">Ray end</param>
-        /// <param name="triVertCoords">Vertex coordinates of the triangle</param>
-        /// <returns>Intersects or not</returns>
         private static bool RayIntersectsTriangle(Vertex rayEnd, Vertex rayOrigin, Facet facet)
         {
             double[] sv = new double[5]; // allocate storage for 5 instances of signed volumes
@@ -337,15 +658,6 @@ namespace slicer.Bulder
 
             return intersects;
         }
-
-        /// <summary>
-        /// Signed volume calculation
-        /// </summary>
-        /// <param name="p"></param>
-        /// <param name="p1"></param>
-        /// <param name="p2"></param>
-        /// <param name="p3"></param>
-        /// <returns></returns>
         private static double SignedVolume(Double3 p, Double3 p1, Double3 p2, Double3 p3)
         {
             Double3 pp1 = p1 - p;
@@ -362,10 +674,6 @@ namespace slicer.Bulder
                         - (edges[0][1] * edges[1][0] * edges[2][2]);
             return (1.0 / 6.0 * det);
         }
-
-        /// <summary>
-        /// Add data in global list and clear cache
-        /// </summary>
         private static void UpdateData()
         {
             if (cache.Count() % 2 == 0)
@@ -378,7 +686,6 @@ namespace slicer.Bulder
             }
             cache.Clear();
         }
-
         private static void goHome()
         {
             // Задаем координаты коробки с отступом от детали в половину Overlap
