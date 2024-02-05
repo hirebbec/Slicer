@@ -20,19 +20,15 @@ namespace slicer.io
         /// <param name="x">Координата X.</param>
         /// <param name="y">Координата Y.</param>
         /// <param name="z">Координата Z.</param>
-        public static void GoTo(double x, double y, double z, bool flag)
+        public static void GoTo1(double x, double y, double z)
         {
-            string gCode = "";
-            if (flag)
-            {
-                gCode = $"G1 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};";
+            WriteToFile($"G1 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};");
 
-            } else
-            {
-                gCode = $"G0 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};";
-            }
-            WriteToFile(gCode);
-            //WriteToFile("M0"); TODO
+        }
+
+        public static void GoTo0(double x, double y, double z)
+        {
+            WriteToFile($"G0 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};");
         }
 
         /// <summary>
@@ -58,15 +54,38 @@ namespace slicer.io
         /// Записывает список вершин в G-code, перемещая головку 3D принтера по каждой вершине.
         /// </summary>
         /// <param name="vertices">Список вершин для обработки.</param>
-        public static void WriteVertices(List<Vertex> vertices, String filePath)
+        public static void WriteSolid(List<Vertex> vertices, String filePath)
+        {
+            StreamWriter writer = new StreamWriter(filePath, false);
+            writer.Close();
+            FileWriter.filePath = filePath;
+            GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+            vertices.RemoveAt(0);
+            for (int i = 0; i < vertices.Count(); i++)
+            {
+                if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                {
+                    GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                }
+                GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+            }
+        }
+
+        public static void WriteNotSolid(List<Vertex> vertices, String filePath)
         {
             StreamWriter writer = new StreamWriter(filePath, false);
             writer.Close();
             FileWriter.filePath = filePath;
             bool flag = false;
-            foreach (var vertex in vertices)
+            for (int i = 0; i < vertices.Count(); i++)
             {
-                GoTo(vertex.x, vertex.y, vertex.z, flag);
+                if (flag)
+                {
+                    GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                } else
+                {
+                    GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                }
                 flag = !flag;
             }
         }
