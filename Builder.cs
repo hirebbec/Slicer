@@ -136,29 +136,10 @@ namespace slicer.Bulder
         }
         private static void rayX(List<Facet> facets)
         {
-            // going right (parallel to X)
             Vertex rayOrigin = currentPosition;
             Vertex rayEnd = new Vertex(maxX, currentPosition.y, currentPosition.z);
-
-            // finding intersection
-            foreach (Facet facet in facets)
-            {
-                if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
-                {
-                    Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
-                    if (v != null)
-                        cache.Add(v);
-                }
-            }
-        }
-        private static void rayReverseX(List<Facet> facets)
-        {
-            // going left (parallel to X)
-            Vertex rayOrigin = currentPosition;
-            Vertex rayEnd = new Vertex(minX, currentPosition.y, currentPosition.z);
             List<Vertex> tmp = new List<Vertex>();
 
-            // finding intersection
             foreach (Facet facet in facets)
             {
                 if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
@@ -168,7 +149,25 @@ namespace slicer.Bulder
                         tmp.Add(v);
                 }
             }
-            tmp.Reverse();
+            tmp.Sort(delegate (Vertex one, Vertex two) { return one.x.CompareTo(two.x); });
+            cache.AddRange(tmp);
+        }
+        private static void rayReverseX(List<Facet> facets)
+        {
+            Vertex rayOrigin = currentPosition;
+            Vertex rayEnd = new Vertex(minX, currentPosition.y, currentPosition.z);
+            List<Vertex> tmp = new List<Vertex>();
+
+            foreach (Facet facet in facets)
+            {
+                if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                {
+                    Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                    if (v != null)
+                        tmp.Add(v);
+                }
+            }
+            tmp.Sort(delegate (Vertex one, Vertex two) { return two.x.CompareTo(one.x); });
             cache.AddRange(tmp);
         }
         private static void AlongX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
@@ -355,24 +354,8 @@ namespace slicer.Bulder
             // going right (parallel to X)
             Vertex rayOrigin = currentPosition;
             Vertex rayEnd = new Vertex(currentPosition.x, maxY, currentPosition.z);
-
-            // finding intersection
-            foreach (Facet facet in facets)
-            {
-                if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
-                {
-                    Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
-                    if (v != null)
-                        cache.Add(v);
-                }
-            }
-        }
-        private static void rayReverseY(List<Facet> facets)
-        {
-            // going right (parallel to X)
-            Vertex rayOrigin = currentPosition;
-            Vertex rayEnd = new Vertex(currentPosition.x, minY, currentPosition.z);
             List<Vertex> tmp = new List<Vertex>();
+
             // finding intersection
             foreach (Facet facet in facets)
             {
@@ -383,7 +366,24 @@ namespace slicer.Bulder
                         tmp.Add(v);
                 }
             }
-            tmp.Reverse();
+            tmp.Sort(delegate (Vertex one, Vertex two) { return one.y.CompareTo(two.y); });
+            cache.AddRange(tmp);
+        }
+        private static void rayReverseY(List<Facet> facets)
+        {
+            Vertex rayOrigin = currentPosition;
+            Vertex rayEnd = new Vertex(currentPosition.x, minY, currentPosition.z);
+            List<Vertex> tmp = new List<Vertex>();
+            foreach (Facet facet in facets)
+            {
+                if (RayIntersectsTriangle(rayOrigin, rayEnd, facet))
+                {
+                    Vertex v = CoordinateIntersection(rayOrigin, rayEnd, facet);
+                    if (v != null)
+                        tmp.Add(v);
+                }
+            }
+            tmp.Sort(delegate (Vertex one, Vertex two) { return two.y.CompareTo(one.y); });
             cache.AddRange(tmp);
         }
         public static void BuildPlaneCrossToCross()

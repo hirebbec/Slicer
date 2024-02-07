@@ -113,5 +113,91 @@ namespace slicer.io
                 flag = !flag;
             }
         }
+
+        public static void WriteSnakeX(List<Vertex> vertices)
+        {
+            if (vertices.Count != 0)
+            {
+                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
+                {
+                    if (i > 0 && vertices[i - 1].y == vertices[i].y)
+                    {
+                        bool flag = true;
+                        while (i < vertices.Count() && vertices[i - 1].y == vertices[i].y)
+                        {
+                            if (vertices[i - 1].z < vertices[i].z)
+                            {
+                                GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                                flag = false;
+                            }
+                            else if (flag)
+                            {
+                                GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                            }
+                            else
+                            {
+                                GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                            }
+                            flag = !flag;
+                            i++;
+                        }
+                        i--;
+                    }
+                    else if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                    {
+                        GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                }
+            }
+        }
+
+        public static void WriteSnakeY(List<Vertex> vertices)
+        {
+            if (vertices.Count != 0)
+            {
+                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
+                {
+                    if (i > 0 && vertices[i - 1].x == vertices[i].x)
+                    {
+                        bool flag = true;
+                        while (i < vertices.Count() && vertices[i - 1].x == vertices[i].x)
+                        {
+                            if (vertices[i - 1].z < vertices[i].z)
+                            {
+                                GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                                flag = false;
+                            }
+                            else if (flag)
+                            {
+                                GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                            }
+                            else
+                            {
+                                GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                            }
+                            flag = !flag;
+                            i++;
+                        }
+                        i--;
+                    }
+                    else if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                    {
+                        GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                }
+            }
+        }
     }
 }
