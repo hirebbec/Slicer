@@ -9,6 +9,7 @@ namespace slicer.Bulder
         public static double minX, maxX, minY, maxY, minZ, maxZ;
         public static List<Vertex> globalVertex = new List<Vertex>();
         public static List<Vertex> cache = new List<Vertex>();
+        public static List<List<Vertex>> Smartcache = new List<List<Vertex>>();
         public static Stl stl;
         public static Vertex currentPosition;
         public static Robot robot;
@@ -611,6 +612,106 @@ namespace slicer.Bulder
                 j++;
                 currentPosition.x = currentPosition.x + robot.Overlap;
             }
+        }
+
+        public static void BuildPlaneSmartSnakeX()
+        {
+            globalVertex.Clear();
+            goHome();
+
+            Stopwatch stopwatch = new Stopwatch();
+            int iterationCount = 0;
+            double totalTime = 0;
+            DateTime startTime = DateTime.Now;
+            stopwatch.Start();
+
+            // Задаем начальные координаты робота
+            Builder.currentPosition = new Vertex(minX, minY, minZ);
+            bool flag = false;
+
+            while (currentPosition.z < maxZ)
+            {
+                for (int j = 0; j < stl.Facets.Count(); j++)
+                {
+                    if (stl.Facets[j].vertex1.z < currentPosition.z && stl.Facets[j].vertex2.z < currentPosition.z && stl.Facets[j].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.Remove(stl.Facets[j]);
+                        j--;
+                    }
+                }
+                stopwatch.Restart();
+                SmartSnakeX(stl.getFacets(), ref robot, ref currentPosition);
+                if (flag)
+                {
+                    cache.Reverse();
+                }
+                flag = !flag;
+                UpdateData();
+                stopwatch.Stop();
+                totalTime += stopwatch.Elapsed.TotalSeconds;
+
+                currentPosition.x = minX;
+                currentPosition.y = minY;
+                currentPosition.z = currentPosition.z + robot.HeightStep;
+
+                iterationCount++;
+
+                double averageTimePerIteration = totalTime / iterationCount;
+                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
+
+                Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
+            } // end while (currentZ < maxZ)
+
+            stopwatch.Stop();
+
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime - startTime;
+
+            Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
+            Console.WriteLine($"Количество итераций: {iterationCount}");
+        }
+        private static void SmartSnakeX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        {
+            int j = 0;
+            while (currentPosition.y < maxY)
+            {
+                for (int i = 0; i < facets.Count(); i++)
+                {
+                    if (facets[i].vertex1.y < currentPosition.y && facets[i].vertex2.y < currentPosition.y && facets[i].vertex3.y < currentPosition.y)
+                    {
+                        facets.Remove(facets[i]);
+                        i--;
+                    }
+                }
+                if (j % 2 == 0)
+                {
+                    rayX(facets);
+                    currentPosition.x = maxX;
+                }
+                else
+                {
+                    rayReverseX(facets);
+                    currentPosition.x = minX;
+                    cache.Reverse();
+                }
+                for (int i = 0; i < cache.Count(); i+=2)
+                {
+                    if (Smartcache.Count() <= i / 2)
+                        Smartcache.Add(new List<Vertex>());
+                    Smartcache[i / 2].Add(cache[i]);
+                    Smartcache[i / 2].Add(cache[i + 1]);
+                }
+                cache.Clear();
+                j++;
+                currentPosition.y = currentPosition.y + robot.Overlap;
+            }
+            cache.Clear();
+            for (int i = 0; i < Smartcache.Count(); i++)
+            {
+                cache.AddRange(Smartcache[i]);
+            }
+            Smartcache.Clear();
         }
         private static Vertex CoordinateIntersection(Vertex rayOrigin, Vertex rayEnd, Facet facet)
         {
