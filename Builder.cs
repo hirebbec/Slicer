@@ -689,9 +689,9 @@ namespace slicer.Bulder
         private static void goHome()
         {
             // Задаем координаты коробки с отступом от детали в половину Overlap
-            minX = stl.MinX - robot.Overlap; maxX = stl.MaxX + robot.Overlap;
-            minY = stl.MinY - robot.Overlap; maxY = stl.MaxY + robot.Overlap;
-            minZ = stl.MinZ - robot.Overlap; maxZ = stl.MaxZ + robot.Overlap;
+            minX = stl.MinX - 2 * robot.Overlap; maxX = stl.MaxX + 2 * robot.Overlap;
+            minY = stl.MinY - 2 * robot.Overlap; maxY = stl.MaxY + 2 * robot.Overlap;
+            minZ = stl.MinZ - 2 * robot.Overlap; maxZ = stl.MaxZ + 2 * robot.Overlap;
         }
     }
 }

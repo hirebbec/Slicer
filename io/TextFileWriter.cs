@@ -1,6 +1,7 @@
 ﻿using slicer.stl;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 
 namespace slicer.io
@@ -8,33 +9,61 @@ namespace slicer.io
     public class FileWriter
     {
         private static string filePath;
+        private static double delay;
+        private static double feedSpeed;
+        private static StreamWriter writer;
+        private static NumberFormatInfo nfi;
 
-        /// <summary>
-        /// Создает экземпляр класса FileWriter для записи G-code в файл.
-        /// </summary>
-        /// <param name="filePath">Путь к файлу для записи G-code.</param>
+        public static void init(String filePath, double delay, double feedSpeed)
+        {
+            if (writer != null) { writer.Close(); }
+            FileWriter.writer = new StreamWriter(filePath, false);
+            FileWriter.writer.Close();
+            FileWriter.delay = delay;
+            FileWriter.feedSpeed = feedSpeed;
+            FileWriter.filePath = filePath;
+            FileWriter.nfi = new CultureInfo("en-US", false).NumberFormat;
 
-        /// <summary>
-        /// Записывает G-code для перемещения головки 3D принтера по указанным координатам.
-        /// </summary>
-        /// <param name="x">Координата X.</param>
-        /// <param name="y">Координата Y.</param>
-        /// <param name="z">Координата Z.</param>
+
+            WriteToFile("M82"); // Установка экструдера в абсолютный режим
+            WriteToFile("G90"); // Включение абсолютного позиционирования 
+            WriteToFile("M71"); // ??
+            WriteToFile("M72"); // ??
+            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi)); // Пауза
+            WriteToFile($"F" + Math.Round(feedSpeed, 3).ToString(nfi)); // Установка скорости подачи (мм/с)
+            WriteToFile("G1 X0.0 Y0.0 Z0.0"); // Перемещение центр
+            WriteToFile("M61"); // Включение и выключение чего-то (мб подачи порошка)
+            WriteToFile("M91"); // Включает абсолютное позиционирование для подачи экструдера
+            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi)); // Пауза
+            WriteToFile("M63"); // ??
+        }
         public static void GoTo1(double x, double y, double z)
         {
-            WriteToFile($"G1 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};");
-
+            WriteToFile("G1 X" + Math.Round(x, 3).ToString(nfi) + " Y" + Math.Round(y, 3).ToString(nfi) + " Z" + Math.Round(z, 3).ToString(nfi));
         }
 
         public static void GoTo0(double x, double y, double z)
         {
-            WriteToFile($"G0 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};");
+            WriteToFile("G0 X" + Math.Round(x, 3).ToString(nfi) + " Y" + Math.Round(y, 3).ToString(nfi) + " Z" + Math.Round(z, 3).ToString(nfi));
         }
 
-        /// <summary>
-        /// Записывает строку G-code в файл.
-        /// </summary>
-        /// <param name="gCode">Строка G-code для записи.</param>
+        public static void GoUp(double x, double y, double z)
+        {
+            WriteToFile("M60");
+            WriteToFile("M62");
+            WriteToFile("M99");
+            GoTo0(x, y, z);
+            WriteToFile("M61");
+            WriteToFile("M91");
+            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi));
+            WriteToFile("M63");
+        }
+
+        public static void End()
+        {
+            WriteToFile("M79");
+            WriteToFile("E");
+        }
         private static void WriteToFile(string gCode)
         {
             try
@@ -49,33 +78,28 @@ namespace slicer.io
                 Console.WriteLine($"Ошибка при записи в файл: {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// Записывает список вершин в G-code, перемещая головку 3D принтера по каждой вершине.
-        /// </summary>
-        /// <param name="vertices">Список вершин для обработки.</param>
-        public static void WriteSolid(List<Vertex> vertices, String filePath)
+        public static void WriteSolid(List<Vertex> vertices)
         {
-            StreamWriter writer = new StreamWriter(filePath, false);
-            writer.Close();
-            FileWriter.filePath = filePath;
-            GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
-            vertices.RemoveAt(0);
-            for (int i = 0; i < vertices.Count(); i++)
+            if (vertices.Count != 0)
             {
-                if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
                 {
-                    GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                    {
+                        GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
                 }
-                GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
             }
         }
 
-        public static void WriteNotSolid(List<Vertex> vertices, String filePath)
+        public static void WriteNotSolid(List<Vertex> vertices)
         {
-            StreamWriter writer = new StreamWriter(filePath, false);
-            writer.Close();
-            FileWriter.filePath = filePath;
             bool flag = false;
             for (int i = 0; i < vertices.Count(); i++)
             {
