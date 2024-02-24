@@ -640,11 +640,7 @@ namespace slicer.Bulder
                     }
                 }
                 stopwatch.Restart();
-                SmartSnakeX(stl.getFacets(), ref robot, ref currentPosition);
-                if (flag)
-                {
-                    cache.Reverse();
-                }
+                SmartSnakeX(stl.getFacets(), ref robot, ref currentPosition, flag);
                 flag = !flag;
                 UpdateData();
                 stopwatch.Stop();
@@ -671,7 +667,7 @@ namespace slicer.Bulder
             Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
             Console.WriteLine($"Количество итераций: {iterationCount}");
         }
-        private static void SmartSnakeX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void SmartSnakeX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition, bool flag)
         {
             int j = 0;
             while (currentPosition.y < maxY)
@@ -684,31 +680,44 @@ namespace slicer.Bulder
                         i--;
                     }
                 }
-                if (j % 2 == 0)
+                rayX(facets);
+                if (cache.Count() > 1)
                 {
-                    rayX(facets);
-                    currentPosition.x = maxX;
-                }
-                else
-                {
-                    rayReverseX(facets);
-                    currentPosition.x = minX;
-                    cache.Reverse();
-                }
-                for (int i = 0; i < cache.Count(); i+=2)
-                {
-                    if (Smartcache.Count() <= i / 2)
-                        Smartcache.Add(new List<Vertex>());
-                    Smartcache[i / 2].Add(cache[i]);
-                    Smartcache[i / 2].Add(cache[i + 1]);
+                    if (cache.Count() % 2 == 0)
+                    {
+                        for (int i = 0; i < cache.Count(); i += 2)
+                        {
+                            if (Smartcache.Count() <= i / 2)
+                            {
+                                Smartcache.Add(new List<Vertex>());
+                            }
+                            if (j % 2 == 0)
+                            {
+                                Smartcache[i / 2].Add(cache[i]);
+                                Smartcache[i / 2].Add(cache[i + 1]);
+                            }
+                            else
+                            {
+                                Smartcache[i / 2].Add(cache[i + 1]);
+                                Smartcache[i / 2].Add(cache[i]);
+                            }
+                        }
+                    }
                 }
                 cache.Clear();
                 j++;
                 currentPosition.y = currentPosition.y + robot.Overlap;
             }
+            if (flag)
+                Smartcache.Reverse();
             cache.Clear();
             for (int i = 0; i < Smartcache.Count(); i++)
             {
+                if (flag)
+                {
+                    Smartcache[i].Reverse();
+                }
+                Smartcache[i][0].flag = false;
                 cache.AddRange(Smartcache[i]);
             }
             Smartcache.Clear();

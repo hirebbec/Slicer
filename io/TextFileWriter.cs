@@ -11,10 +11,13 @@ namespace slicer.io
         private static string filePath;
         private static double delay;
         private static double feedSpeed;
+        private static double overlap;
+        private static double heightStep;
         private static StreamWriter writer;
         private static NumberFormatInfo nfi;
 
-        public static void init(String filePath, double delay, double feedSpeed)
+
+        public static void init(String filePath, double delay, double feedSpeed, double overlap, double heightStep)
         {
             if (writer != null) { writer.Close(); }
             FileWriter.writer = new StreamWriter(filePath, false);
@@ -22,6 +25,8 @@ namespace slicer.io
             FileWriter.delay = delay;
             FileWriter.feedSpeed = feedSpeed;
             FileWriter.filePath = filePath;
+            FileWriter.overlap = overlap;
+            FileWriter.heightStep = heightStep;
             FileWriter.nfi = new CultureInfo("en-US", false).NumberFormat;
 
 
@@ -44,7 +49,14 @@ namespace slicer.io
 
         public static void GoTo0(double x, double y, double z)
         {
+            WriteToFile("M60");
+            WriteToFile("M62");
+            WriteToFile("M99");
             WriteToFile("G0 X" + Math.Round(x, 3).ToString(nfi) + " Y" + Math.Round(y, 3).ToString(nfi) + " Z" + Math.Round(z, 3).ToString(nfi));
+            WriteToFile("M61");
+            WriteToFile("M91");
+            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi));
+            WriteToFile("M63");
         }
 
         public static void GoUp(double x, double y, double z)
@@ -88,7 +100,7 @@ namespace slicer.io
                 {
                     if (i > 0 && vertices[i - 1].z < vertices[i].z)
                     {
-                        GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
                     else
                     {
@@ -129,7 +141,7 @@ namespace slicer.io
                         {
                             if (vertices[i - 1].z < vertices[i].z)
                             {
-                                GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                                GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                                 flag = false;
                             }
                             else if (flag)
@@ -145,9 +157,37 @@ namespace slicer.io
                         }
                         i--;
                     }
-                    else if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                    else if (i > 0 && (vertices[i - 1].z < vertices[i].z || Math.Abs(Math.Abs(vertices[i - 1].y) - Math.Abs(vertices[i].y)) > 1.1 * overlap))
                     {
-                        GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                }
+            }
+        }
+
+        public static void WriteSmartSnakeX(List<Vertex> vertices)
+        {
+            if (vertices.Count != 0)
+            {
+                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
+                {
+                    if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else if (!vertices[i].flag)
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else if (i > 0 && Math.Abs(Math.Abs(vertices[i - 1].y) - Math.Abs(vertices[i].y)) > 1.1 * overlap)
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
                     else
                     {
@@ -172,7 +212,7 @@ namespace slicer.io
                         {
                             if (vertices[i - 1].z < vertices[i].z)
                             {
-                                GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                                GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                                 flag = false;
                             }
                             else if (flag)
@@ -189,8 +229,8 @@ namespace slicer.io
                         i--;
                     }
                     else if (i > 0 && vertices[i - 1].z < vertices[i].z)
-                    {
-                        GoUp(vertices[i].x, vertices[i].y, vertices[i].z);
+                    {   
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
                     else
                     {
