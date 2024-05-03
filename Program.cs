@@ -10,12 +10,12 @@ double feedSpeed = 0.85;
 
 
 Robot robot = new Robot(overlap, heightStep);
-String name = "3Tower";
-Stl snake = new Stl("./../../../models/" + name + ".stl");
+String name = "torus";
+Stl snake = new Stl("models/" + name + ".stl");
 
 Builder.init(snake, robot);
-Builder.BuildPlaneSnakeX();
+Builder.BuildPlaneSmartSnakeX();
 
-FileWriter.init("./../../../results/" + name + ".txt", delay, feedSpeed, overlap, heightStep);
-FileWriter.WriteSnakeX(Builder.globalVertex);
+FileWriter.init("results/" + name + ".txt", delay, feedSpeed, overlap, heightStep);
+FileWriter.WriteSmartSnakeX(Builder.globalVertex);
 FileWriter.End();

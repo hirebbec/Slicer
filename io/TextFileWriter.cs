@@ -59,18 +59,6 @@ namespace slicer.io
             WriteToFile("M63");
         }
 
-        public static void GoUp(double x, double y, double z)
-        {
-            WriteToFile("M60");
-            WriteToFile("M62");
-            WriteToFile("M99");
-            GoTo0(x, y, z);
-            WriteToFile("M61");
-            WriteToFile("M91");
-            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi));
-            WriteToFile("M63");
-        }
-
         public static void End()
         {
             WriteToFile("M79");
@@ -186,6 +174,10 @@ namespace slicer.io
                         GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
                     else if (i > 0 && Math.Abs(Math.Abs(vertices[i - 1].y) - Math.Abs(vertices[i].y)) > 1.1 * overlap)
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else if (i > 0 && (Math.Abs(Math.Abs(vertices[i - 1].x) - Math.Abs(vertices[i].x)) > 3 * overlap && vertices[i].y != vertices[i - 1].y))
                     {
                         GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
