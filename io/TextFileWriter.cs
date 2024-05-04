@@ -1,6 +1,7 @@
 ﻿using slicer.stl;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 
 namespace slicer.io
@@ -8,37 +9,61 @@ namespace slicer.io
     public class FileWriter
     {
         private static string filePath;
+        private static double delay;
+        private static double feedSpeed;
+        private static double overlap;
+        private static double heightStep;
+        private static StreamWriter writer;
+        private static NumberFormatInfo nfi;
 
-        /// <summary>
-        /// Создает экземпляр класса FileWriter для записи G-code в файл.
-        /// </summary>
-        /// <param name="filePath">Путь к файлу для записи G-code.</param>
 
-        /// <summary>
-        /// Записывает G-code для перемещения головки 3D принтера по указанным координатам.
-        /// </summary>
-        /// <param name="x">Координата X.</param>
-        /// <param name="y">Координата Y.</param>
-        /// <param name="z">Координата Z.</param>
-        public static void GoTo(double x, double y, double z, bool flag)
+        public static void init(String filePath, double delay, double feedSpeed, double overlap, double heightStep)
         {
-            string gCode = "";
-            if (flag)
-            {
-                gCode = $"G1 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};";
+            if (writer != null) { writer.Close(); }
+            FileWriter.writer = new StreamWriter(filePath, false);
+            FileWriter.writer.Close();
+            FileWriter.delay = delay;
+            FileWriter.feedSpeed = feedSpeed;
+            FileWriter.filePath = filePath;
+            FileWriter.overlap = overlap;
+            FileWriter.heightStep = heightStep;
+            FileWriter.nfi = new CultureInfo("en-US", false).NumberFormat;
 
-            } else
-            {
-                gCode = $"G0 X{(int)(1000 * x)} Y{(int)(1000 * y)} Z{(int)(1000 * z)};";
-            }
-            WriteToFile(gCode);
-            //WriteToFile("M0"); TODO
+
+            WriteToFile("M82"); // Установка экструдера в абсолютный режим
+            WriteToFile("G90"); // Включение абсолютного позиционирования 
+            WriteToFile("M71"); // ??
+            WriteToFile("M72"); // ??
+            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi)); // Пауза
+            WriteToFile($"F" + Math.Round(feedSpeed, 3).ToString(nfi)); // Установка скорости подачи (мм/с)
+            WriteToFile("G1 X0.0 Y0.0 Z0.0"); // Перемещение центр
+            WriteToFile("M61"); // Включение и выключение чего-то (мб подачи порошка)
+            WriteToFile("M91"); // Включает абсолютное позиционирование для подачи экструдера
+            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi)); // Пауза
+            WriteToFile("M63"); // ??
+        }
+        public static void GoTo1(double x, double y, double z)
+        {
+            WriteToFile("G1 X" + Math.Round(x, 3).ToString(nfi) + " Y" + Math.Round(y, 3).ToString(nfi) + " Z" + Math.Round(z, 3).ToString(nfi));
         }
 
-        /// <summary>
-        /// Записывает строку G-code в файл.
-        /// </summary>
-        /// <param name="gCode">Строка G-code для записи.</param>
+        public static void GoTo0(double x, double y, double z)
+        {
+            WriteToFile("M60");
+            WriteToFile("M62");
+            WriteToFile("M99");
+            WriteToFile("G0 X" + Math.Round(x, 3).ToString(nfi) + " Y" + Math.Round(y, 3).ToString(nfi) + " Z" + Math.Round(z, 3).ToString(nfi));
+            WriteToFile("M61");
+            WriteToFile("M91");
+            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi));
+            WriteToFile("M63");
+        }
+
+        public static void End()
+        {
+            WriteToFile("M79");
+            WriteToFile("E");
+        }
         private static void WriteToFile(string gCode)
         {
             try
@@ -53,21 +78,157 @@ namespace slicer.io
                 Console.WriteLine($"Ошибка при записи в файл: {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// Записывает список вершин в G-code, перемещая головку 3D принтера по каждой вершине.
-        /// </summary>
-        /// <param name="vertices">Список вершин для обработки.</param>
-        public static void WriteVertices(List<Vertex> vertices, String filePath)
+        public static void WriteSolid(List<Vertex> vertices)
         {
-            StreamWriter writer = new StreamWriter(filePath, false);
-            writer.Close();
-            FileWriter.filePath = filePath;
-            bool flag = false;
-            foreach (var vertex in vertices)
+            if (vertices.Count != 0)
             {
-                GoTo(vertex.x, vertex.y, vertex.z, flag);
+                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
+                {
+                    if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                }
+            }
+        }
+
+        public static void WriteNotSolid(List<Vertex> vertices)
+        {
+            bool flag = false;
+            for (int i = 0; i < vertices.Count(); i++)
+            {
+                if (flag)
+                {
+                    GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                } else
+                {
+                    GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                }
                 flag = !flag;
+            }
+        }
+
+        public static void WriteSnakeX(List<Vertex> vertices)
+        {
+            if (vertices.Count != 0)
+            {
+                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
+                {
+                    if (i > 0 && vertices[i - 1].y == vertices[i].y)
+                    {
+                        bool flag = true;
+                        while (i < vertices.Count() && vertices[i - 1].y == vertices[i].y)
+                        {
+                            if (vertices[i - 1].z < vertices[i].z)
+                            {
+                                GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                                flag = false;
+                            }
+                            else if (flag)
+                            {
+                                GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                            }
+                            else
+                            {
+                                GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                            }
+                            flag = !flag;
+                            i++;
+                        }
+                        i--;
+                    }
+                    else if (i > 0 && (vertices[i - 1].z < vertices[i].z || Math.Abs(Math.Abs(vertices[i - 1].y) - Math.Abs(vertices[i].y)) > 1.1 * overlap))
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                }
+            }
+        }
+
+        public static void WriteSmartSnakeX(List<Vertex> vertices)
+        {
+            if (vertices.Count != 0)
+            {
+                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
+                {
+                    if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else if (!vertices[i].flag)
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else if (i > 0 && Math.Abs(Math.Abs(vertices[i - 1].y) - Math.Abs(vertices[i].y)) > 1.1 * overlap)
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else if (i > 0 && (Math.Abs(Math.Abs(vertices[i - 1].x) - Math.Abs(vertices[i].x)) > 3 * overlap && vertices[i].y != vertices[i - 1].y))
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                }
+            }
+        }
+
+        public static void WriteSnakeY(List<Vertex> vertices)
+        {
+            if (vertices.Count != 0)
+            {
+                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
+                {
+                    if (i > 0 && vertices[i - 1].x == vertices[i].x)
+                    {
+                        bool flag = true;
+                        while (i < vertices.Count() && vertices[i - 1].x == vertices[i].x)
+                        {
+                            if (vertices[i - 1].z < vertices[i].z)
+                            {
+                                GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                                flag = false;
+                            }
+                            else if (flag)
+                            {
+                                GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                            }
+                            else
+                            {
+                                GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                            }
+                            flag = !flag;
+                            i++;
+                        }
+                        i--;
+                    }
+                    else if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                    {   
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                }
             }
         }
     }

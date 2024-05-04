@@ -10,39 +10,35 @@ namespace slicer.stl
     public class Vertex : ICloneable
     {
         public double x, y, z;
+        public bool flag; // Если true, то переход без выключения
 
-        /// <summary>
-        /// Создается экземпляр Vertex с координатами x,y,z
-        /// </summary>
-        /// <param name="coord"> Координаты вершины Vertex</param>
-        public Vertex(Double3 coord)
+        public Vertex(Double3 coord, bool flag = true)
         {
             this.x = coord.x;
             this.y = coord.y;
             this.z = coord.z;
+            this.flag = flag;
         }
 
-        /// <summary>
-        /// Перегрузка конструктора класса
-        /// </summary>
-        /// <param name="coord"> Координаты вершины Vertex</param>
-        public Vertex(double[] coord)
+        public Vertex(double[] coord, bool flag = true)
         {
             this.x = coord[0];
             this.y = coord[1];
             this.z = coord[2];
+            this.flag = flag;
         }
 
-        public Vertex(double coord1, double coord2, double coord3)
+        public Vertex(double coord1, double coord2, double coord3, bool flag = true)
         {
             this.x = coord1;
             this.y = coord2;
             this.z = coord3;
+            this.flag = flag;
         }
 
         public object Clone()
         {
-            return new Vertex(x, y, z);
+            return new Vertex(x, y, z, flag);
         }
     }
 }
