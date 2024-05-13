@@ -9,14 +9,14 @@ namespace slicer.Bulder
         public static double minX, maxX, minY, maxY, minZ, maxZ;
         public static List<Vertex> globalVertex = new List<Vertex>();
         public static List<Vertex> cache = new List<Vertex>();
-        public static List<List<Vertex>> Smartcache = new List<List<Vertex>>();
+        public static List<List<Vertex>> smartCache = new List<List<Vertex>>();
         public static Stl stl;
         public static Vertex currentPosition;
-        public static Robot robot;
-        public static void init(Stl stl, Robot robot)
+        public static Settings settings;
+        public static void init(Stl stl, Settings settings)
         {
             Builder.stl = stl;
-            Builder.robot = robot;
+            Builder.settings = settings;
             goHome();
         }
         public static void BuildPlaneX()
@@ -46,7 +46,7 @@ namespace slicer.Bulder
                 }
 
                 stopwatch.Restart();
-                AlongX(stl.getFacets(), ref robot, ref currentPosition);
+                AlongX(stl.getFacets(), ref settings, ref currentPosition);
                 if (flag)
                 {
                     cache.Reverse();
@@ -58,12 +58,12 @@ namespace slicer.Bulder
 
                 currentPosition.x = minX;
                 currentPosition.y = minY;
-                currentPosition.z = currentPosition.z + robot.HeightStep;
+                currentPosition.z = currentPosition.z + settings.HeightStep;
 
                 iterationCount++;
 
                 double averageTimePerIteration = totalTime / iterationCount;
-                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double iterationsCount = (maxZ - currentPosition.z) / settings.HeightStep;
                 double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
 
                 Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
@@ -104,7 +104,7 @@ namespace slicer.Bulder
                 }
 
                 stopwatch.Restart();
-                AlongReverseX(stl.getFacets(), ref robot, ref currentPosition);
+                AlongReverseX(stl.getFacets(), ref settings, ref currentPosition);
                 if (flag)
                 {
                     cache.Reverse();
@@ -116,12 +116,12 @@ namespace slicer.Bulder
 
                 currentPosition.x = maxX;
                 currentPosition.y = minY;
-                currentPosition.z = currentPosition.z + robot.HeightStep;
+                currentPosition.z = currentPosition.z + settings.HeightStep;
 
                 iterationCount++;
 
                 double averageTimePerIteration = totalTime / iterationCount;
-                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double iterationsCount = (maxZ - currentPosition.z) / settings.HeightStep;
                 double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
 
                 Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
@@ -171,7 +171,7 @@ namespace slicer.Bulder
             tmp.Sort(delegate (Vertex one, Vertex two) { return two.x.CompareTo(one.x); });
             cache.AddRange(tmp);
         }
-        private static void AlongX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void AlongX(List<Facet> facets, ref Settings robot, ref Vertex currentPosition)
         {
             while (currentPosition.y < maxY)
             {
@@ -187,7 +187,7 @@ namespace slicer.Bulder
                 currentPosition.y = currentPosition.y + robot.Overlap;
             }
         }
-        private static void AlongReverseX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void AlongReverseX(List<Facet> facets, ref Settings robot, ref Vertex currentPosition)
         {
             while (currentPosition.y < maxY)
             {
@@ -230,7 +230,7 @@ namespace slicer.Bulder
                 }
 
                 stopwatch.Restart();
-                AlongY(stl.getFacets(), ref robot, ref currentPosition);
+                AlongY(stl.getFacets(), ref settings, ref currentPosition);
                 if (flag)
                 {
                     cache.Reverse();
@@ -242,12 +242,12 @@ namespace slicer.Bulder
 
                 currentPosition.x = minX;
                 currentPosition.y = minY;
-                currentPosition.z = currentPosition.z + robot.HeightStep;
+                currentPosition.z = currentPosition.z + settings.HeightStep;
 
                 iterationCount++;
 
                 double averageTimePerIteration = totalTime / iterationCount;
-                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double iterationsCount = (maxZ - currentPosition.z) / settings.HeightStep;
                 double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
 
                 Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
@@ -288,7 +288,7 @@ namespace slicer.Bulder
                 }
 
                 stopwatch.Restart();
-                AlongReverseY(stl.getFacets(), ref robot, ref currentPosition);
+                AlongReverseY(stl.getFacets(), ref settings, ref currentPosition);
                 if (flag)
                 {
                     cache.Reverse();
@@ -299,12 +299,12 @@ namespace slicer.Bulder
 
                 currentPosition.x = minX;
                 currentPosition.y = maxY;
-                currentPosition.z = currentPosition.z + robot.HeightStep;
+                currentPosition.z = currentPosition.z + settings.HeightStep;
 
                 iterationCount++;
 
                 double averageTimePerIteration = totalTime / iterationCount;
-                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double iterationsCount = (maxZ - currentPosition.z) / settings.HeightStep;
                 double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
 
                 Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
@@ -318,7 +318,7 @@ namespace slicer.Bulder
             Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
             Console.WriteLine($"Количество итераций: {iterationCount}");
         }
-        private static void AlongY(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void AlongY(List<Facet> facets, ref Settings robot, ref Vertex currentPosition)
         {
             while (currentPosition.x < maxX)
             {
@@ -334,7 +334,7 @@ namespace slicer.Bulder
                 currentPosition.x = currentPosition.x + robot.Overlap;
             }
         }
-        private static void AlongReverseY(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void AlongReverseY(List<Facet> facets, ref Settings robot, ref Vertex currentPosition)
         {
             while (currentPosition.x < maxX)
             {
@@ -415,10 +415,10 @@ namespace slicer.Bulder
                 stopwatch.Restart();
                 if (i % 2 == 0)
                 {
-                    AlongX(stl.getFacets(), ref robot, ref currentPosition);
+                    AlongX(stl.getFacets(), ref settings, ref currentPosition);
                 } else
                 {
-                    AlongY(stl.getFacets(), ref robot, ref currentPosition);
+                    AlongY(stl.getFacets(), ref settings, ref currentPosition);
                 }
                 i++;
                 stopwatch.Stop();
@@ -427,12 +427,12 @@ namespace slicer.Bulder
 
                 currentPosition.x = minX;
                 currentPosition.y = minY;
-                currentPosition.z = currentPosition.z + robot.HeightStep;
+                currentPosition.z = currentPosition.z + settings.HeightStep;
 
                 iterationCount++;
 
                 double averageTimePerIteration = totalTime / iterationCount;
-                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double iterationsCount = (maxZ - currentPosition.z) / settings.HeightStep;
                 double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
 
                 Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
@@ -472,7 +472,7 @@ namespace slicer.Bulder
                     }
                 }
                 stopwatch.Restart();
-                SnakeX(stl.getFacets(), ref robot, ref currentPosition);
+                SnakeX(stl.getFacets(), ref settings, ref currentPosition);
                 if (flag)
                 {
                     cache.Reverse();
@@ -484,12 +484,12 @@ namespace slicer.Bulder
 
                 currentPosition.x = minX;
                 currentPosition.y = minY;
-                currentPosition.z = currentPosition.z + robot.HeightStep;
+                currentPosition.z = currentPosition.z + settings.HeightStep;
 
                 iterationCount++;
 
                 double averageTimePerIteration = totalTime / iterationCount;
-                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double iterationsCount = (maxZ - currentPosition.z) / settings.HeightStep;
                 double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
 
                 Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
@@ -503,7 +503,7 @@ namespace slicer.Bulder
             Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
             Console.WriteLine($"Количество итераций: {iterationCount}");
         }
-        private static void SnakeX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void SnakeX(List<Facet> facets, ref Settings robot, ref Vertex currentPosition)
         {
             int j = 0;
             while (currentPosition.y < maxY)
@@ -555,7 +555,7 @@ namespace slicer.Bulder
                     }
                 }
                 stopwatch.Restart();
-                SnakeY(stl.getFacets(), ref robot, ref currentPosition);
+                SnakeY(stl.getFacets(), ref settings, ref currentPosition);
                 if (flag)
                 {
                     cache.Reverse();
@@ -567,12 +567,12 @@ namespace slicer.Bulder
 
                 currentPosition.x = minX;
                 currentPosition.y = minY;
-                currentPosition.z = currentPosition.z + robot.HeightStep;
+                currentPosition.z = currentPosition.z + settings.HeightStep;
 
                 iterationCount++;
 
                 double averageTimePerIteration = totalTime / iterationCount;
-                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double iterationsCount = (maxZ - currentPosition.z) / settings.HeightStep;
                 double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
 
                 Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
@@ -586,7 +586,7 @@ namespace slicer.Bulder
             Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
             Console.WriteLine($"Количество итераций: {iterationCount}");
         }
-        private static void SnakeY(List<Facet> facets, ref Robot robot, ref Vertex currentPosition)
+        private static void SnakeY(List<Facet> facets, ref Settings robot, ref Vertex currentPosition)
         {
             int j = 0;
             while (currentPosition.x < maxX)
@@ -640,7 +640,7 @@ namespace slicer.Bulder
                     }
                 }
                 stopwatch.Restart();
-                SmartSnakeX(stl.getFacets(), ref robot, ref currentPosition, flag);
+                SmartSnakeX(stl.getFacets(), ref settings, ref currentPosition, flag);
                 flag = !flag;
                 UpdateData();
                 stopwatch.Stop();
@@ -648,12 +648,12 @@ namespace slicer.Bulder
 
                 currentPosition.x = minX;
                 currentPosition.y = minY;
-                currentPosition.z = currentPosition.z + robot.HeightStep;
+                currentPosition.z = currentPosition.z + settings.HeightStep;
 
                 iterationCount++;
 
                 double averageTimePerIteration = totalTime / iterationCount;
-                double iterationsCount = (maxZ - currentPosition.z) / robot.HeightStep;
+                double iterationsCount = (maxZ - currentPosition.z) / settings.HeightStep;
                 double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
 
                 Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
@@ -667,7 +667,7 @@ namespace slicer.Bulder
             Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
             Console.WriteLine($"Количество итераций: {iterationCount}");
         }
-        private static void SmartSnakeX(List<Facet> facets, ref Robot robot, ref Vertex currentPosition, bool flag)
+        private static void SmartSnakeX(List<Facet> facets, ref Settings robot, ref Vertex currentPosition, bool flag)
         {
             int j = 0;
             while (currentPosition.y < maxY)
@@ -687,19 +687,19 @@ namespace slicer.Bulder
                     {
                         for (int i = 0; i < cache.Count(); i += 2)
                         {
-                            if (Smartcache.Count() <= i / 2)
+                            if (smartCache.Count() <= i / 2)
                             {
-                                Smartcache.Add(new List<Vertex>());
+                                smartCache.Add(new List<Vertex>());
                             }
                             if (j % 2 == 0)
                             {
-                                Smartcache[i / 2].Add(cache[i]);
-                                Smartcache[i / 2].Add(cache[i + 1]);
+                                smartCache[i / 2].Add(cache[i]);
+                                smartCache[i / 2].Add(cache[i + 1]);
                             }
                             else
                             {
-                                Smartcache[i / 2].Add(cache[i + 1]);
-                                Smartcache[i / 2].Add(cache[i]);
+                                smartCache[i / 2].Add(cache[i + 1]);
+                                smartCache[i / 2].Add(cache[i]);
                             }
                         }
                     }
@@ -709,18 +709,18 @@ namespace slicer.Bulder
                 currentPosition.y = currentPosition.y + robot.Overlap;
             }
             if (flag)
-                Smartcache.Reverse();
+                smartCache.Reverse();
             cache.Clear();
-            for (int i = 0; i < Smartcache.Count(); i++)
+            for (int i = 0; i < smartCache.Count(); i++)
             {
                 if (flag)
                 {
-                    Smartcache[i].Reverse();
+                    smartCache[i].Reverse();
                 }
-                Smartcache[i][0].flag = false;
-                cache.AddRange(Smartcache[i]);
+                smartCache[i][0].flag = false;
+                cache.AddRange(smartCache[i]);
             }
-            Smartcache.Clear();
+            smartCache.Clear();
         }
         private static Vertex CoordinateIntersection(Vertex rayOrigin, Vertex rayEnd, Facet facet)
         {
@@ -799,9 +799,9 @@ namespace slicer.Bulder
         private static void goHome()
         {
             // Задаем координаты коробки с отступом от детали в половину Overlap
-            minX = stl.MinX - 2 * robot.Overlap; maxX = stl.MaxX + 2 * robot.Overlap;
-            minY = stl.MinY - 2 * robot.Overlap; maxY = stl.MaxY + 2 * robot.Overlap;
-            minZ = stl.MinZ - 2 * robot.Overlap; maxZ = stl.MaxZ + 2 * robot.Overlap;
+            minX = stl.MinX - 2 * settings.Overlap; maxX = stl.MaxX + 2 * settings.Overlap;
+            minY = stl.MinY - 2 * settings.Overlap; maxY = stl.MaxY + 2 * settings.Overlap;
+            minZ = stl.MinZ - 2 * settings.Overlap; maxZ = stl.MaxZ + 2 * settings.Overlap;
         }
     }
 }

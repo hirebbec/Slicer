@@ -3,19 +3,20 @@ using slicer.Bulder;
 using slicer.io;
 using slicer.stl;
 
-double overlap = 0.1;
-double heightStep = 0.1;
-double delay = 1.00;
+double overlap = 1;
+double heightStep = 1;
+double delay = 1000;
 double feedSpeed = 0.85;
+String filename = "bracket";
 
 
-Robot robot = new Robot(overlap, heightStep);
-String name = "torus";
-Stl snake = new Stl("models/" + name + ".stl");
+Settings settings = new Settings(overlap, heightStep, delay, feedSpeed);
 
-Builder.init(snake, robot);
+Stl model = new Stl("models/" + filename + ".stl");
+
+Builder.init(model, settings);
 Builder.BuildPlaneSmartSnakeX();
 
-FileWriter.init("results/" + name + ".txt", delay, feedSpeed, overlap, heightStep);
+FileWriter.init("results/" + filename + ".ncc", settings);
 FileWriter.WriteSmartSnakeX(Builder.globalVertex);
 FileWriter.End();

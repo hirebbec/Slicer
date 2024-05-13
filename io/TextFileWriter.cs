@@ -9,24 +9,18 @@ namespace slicer.io
     public class FileWriter
     {
         private static string filePath;
-        private static double delay;
-        private static double feedSpeed;
-        private static double overlap;
-        private static double heightStep;
+        private static Settings settings;
         private static StreamWriter writer;
         private static NumberFormatInfo nfi;
 
 
-        public static void init(String filePath, double delay, double feedSpeed, double overlap, double heightStep)
+        public static void init(String filePath, Settings settings)
         {
             if (writer != null) { writer.Close(); }
             FileWriter.writer = new StreamWriter(filePath, false);
             FileWriter.writer.Close();
-            FileWriter.delay = delay;
-            FileWriter.feedSpeed = feedSpeed;
+            FileWriter.settings = settings;
             FileWriter.filePath = filePath;
-            FileWriter.overlap = overlap;
-            FileWriter.heightStep = heightStep;
             FileWriter.nfi = new CultureInfo("en-US", false).NumberFormat;
 
 
@@ -34,12 +28,15 @@ namespace slicer.io
             WriteToFile("G90"); // Включение абсолютного позиционирования 
             WriteToFile("M71"); // ??
             WriteToFile("M72"); // ??
-            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi)); // Пауза
-            WriteToFile($"F" + Math.Round(feedSpeed, 3).ToString(nfi)); // Установка скорости подачи (мм/с)
-            WriteToFile("G1 X0.0 Y0.0 Z0.0"); // Перемещение центр
+            WriteToFile($"G4 P" + Math.Round(FileWriter.settings.Delay, 3).ToString(nfi)); // Пауза
+            WriteToFile($"F" + Math.Round(FileWriter.settings.FeedSpeed, 3).ToString(nfi)); // Установка скорости подачи (мм/с)
+        }
+        public static void GoToFirst(double x, double y, double z)
+        {
+            GoTo1(x, y, z);
             WriteToFile("M61"); // Включение и выключение чего-то (мб подачи порошка)
             WriteToFile("M91"); // Включает абсолютное позиционирование для подачи экструдера
-            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi)); // Пауза
+            WriteToFile($"G4 P" + Math.Round(FileWriter.settings.Delay, 3).ToString(nfi)); // Пауза
             WriteToFile("M63"); // ??
         }
         public static void GoTo1(double x, double y, double z)
@@ -55,7 +52,7 @@ namespace slicer.io
             WriteToFile("G0 X" + Math.Round(x, 3).ToString(nfi) + " Y" + Math.Round(y, 3).ToString(nfi) + " Z" + Math.Round(z, 3).ToString(nfi));
             WriteToFile("M61");
             WriteToFile("M91");
-            WriteToFile($"G4 P" + Math.Round(delay, 3).ToString(nfi));
+            WriteToFile($"G4 P" + Math.Round(FileWriter.settings.Delay, 3).ToString(nfi));
             WriteToFile("M63");
         }
 
@@ -82,7 +79,7 @@ namespace slicer.io
         {
             if (vertices.Count != 0)
             {
-                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                GoToFirst(vertices[0].x, vertices[0].y, vertices[0].z);
                 vertices.RemoveAt(0);
                 for (int i = 0; i < vertices.Count(); i++)
                 {
@@ -101,16 +98,22 @@ namespace slicer.io
         public static void WriteNotSolid(List<Vertex> vertices)
         {
             bool flag = false;
-            for (int i = 0; i < vertices.Count(); i++)
+            if (vertices.Count != 0)
             {
-                if (flag)
+                GoToFirst(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
                 {
-                    GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
-                } else
-                {
-                    GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    if (flag)
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    flag = !flag;
                 }
-                flag = !flag;
             }
         }
 
@@ -118,7 +121,7 @@ namespace slicer.io
         {
             if (vertices.Count != 0)
             {
-                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                GoToFirst(vertices[0].x, vertices[0].y, vertices[0].z);
                 vertices.RemoveAt(0);
                 for (int i = 0; i < vertices.Count(); i++)
                 {
@@ -145,7 +148,7 @@ namespace slicer.io
                         }
                         i--;
                     }
-                    else if (i > 0 && (vertices[i - 1].z < vertices[i].z || Math.Abs(Math.Abs(vertices[i - 1].y) - Math.Abs(vertices[i].y)) > 1.1 * overlap))
+                    else if (i > 0 && (vertices[i - 1].z < vertices[i].z || Math.Abs(Math.Abs(vertices[i - 1].y) - Math.Abs(vertices[i].y)) > 1.1 * FileWriter.settings.Overlap))
                     {
                         GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
@@ -161,7 +164,7 @@ namespace slicer.io
         {
             if (vertices.Count != 0)
             {
-                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                GoToFirst(vertices[0].x, vertices[0].y, vertices[0].z);
                 vertices.RemoveAt(0);
                 for (int i = 0; i < vertices.Count(); i++)
                 {
@@ -173,11 +176,11 @@ namespace slicer.io
                     {
                         GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
-                    else if (i > 0 && Math.Abs(Math.Abs(vertices[i - 1].y) - Math.Abs(vertices[i].y)) > 1.1 * overlap)
+                    else if (i > 0 && Math.Abs(Math.Abs(vertices[i - 1].y) - Math.Abs(vertices[i].y)) > 1.1 * FileWriter.settings.Overlap)
                     {
                         GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
-                    else if (i > 0 && (Math.Abs(Math.Abs(vertices[i - 1].x) - Math.Abs(vertices[i].x)) > 3 * overlap && vertices[i].y != vertices[i - 1].y))
+                    else if (i > 0 && (Math.Abs(Math.Abs(vertices[i - 1].x) - Math.Abs(vertices[i].x)) > 1.1 * FileWriter.settings.Overlap && vertices[i].y != vertices[i - 1].y))
                     {
                         GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
