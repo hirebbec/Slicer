@@ -614,6 +614,67 @@ namespace slicer.Bulder
             }
         }
 
+        public static void BuildPlaneCrossToCrossSnake()
+        {
+            globalVertex.Clear();
+            goHome();
+
+            Stopwatch stopwatch = new Stopwatch();
+            int iterationCount = 0;
+            double totalTime = 0;
+            DateTime startTime = DateTime.Now;
+            stopwatch.Start();
+
+            // Задаем начальные координаты робота
+            Builder.currentPosition = new Vertex(minX, minY, minZ);
+            bool flag = false;
+
+            while (currentPosition.z < maxZ)
+            {
+                for (int j = 0; j < stl.Facets.Count(); j++)
+                {
+                    if (stl.Facets[j].vertex1.z < currentPosition.z && stl.Facets[j].vertex2.z < currentPosition.z && stl.Facets[j].vertex3.z < currentPosition.z)
+                    {
+                        stl.Facets.Remove(stl.Facets[j]);
+                        j--;
+                    }
+                }
+                stopwatch.Restart();
+                if (flag)
+                {
+                    SnakeY(stl.getFacets(), ref settings, ref currentPosition);
+                }
+                else
+                {
+                    SnakeX(stl.getFacets(), ref settings, ref currentPosition);
+                }
+                flag = !flag;
+                UpdateData();
+                stopwatch.Stop();
+                totalTime += stopwatch.Elapsed.TotalSeconds;
+
+                currentPosition.x = minX;
+                currentPosition.y = minY;
+                currentPosition.z = currentPosition.z + settings.HeightStep;
+
+                iterationCount++;
+
+                double averageTimePerIteration = totalTime / iterationCount;
+                double iterationsCount = (maxZ - currentPosition.z) / settings.HeightStep;
+                double estimatedTimeLeft = averageTimePerIteration * iterationsCount;
+
+                Console.Write("\rПримерное время ожидания: {0} секунд   ", Math.Round(estimatedTimeLeft), 2);
+            } // end while (currentZ < maxZ)
+
+            stopwatch.Stop();
+
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime - startTime;
+
+            Console.WriteLine($"\rВремя выполнения: {elapsedTime.TotalSeconds} секунд                              ");
+            Console.WriteLine($"Количество итераций: {iterationCount}");
+        }
+
         public static void BuildPlaneSmartSnakeX()
         {
             globalVertex.Clear();

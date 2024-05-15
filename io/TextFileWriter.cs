@@ -196,7 +196,7 @@ namespace slicer.io
         {
             if (vertices.Count != 0)
             {
-                GoTo0(vertices[0].x, vertices[0].y, vertices[0].z);
+                GoToFirst(vertices[0].x, vertices[0].y, vertices[0].z);
                 vertices.RemoveAt(0);
                 for (int i = 0; i < vertices.Count(); i++)
                 {
@@ -225,6 +225,26 @@ namespace slicer.io
                     }
                     else if (i > 0 && vertices[i - 1].z < vertices[i].z)
                     {   
+                        GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                    else
+                    {
+                        GoTo1(vertices[i].x, vertices[i].y, vertices[i].z);
+                    }
+                }
+            }
+        }
+
+        public static void WriteCrossToCrossSnake(List<Vertex> vertices)
+        {
+            if (vertices.Count != 0)
+            {
+                GoToFirst(vertices[0].x, vertices[0].y, vertices[0].z);
+                vertices.RemoveAt(0);
+                for (int i = 0; i < vertices.Count(); i++)
+                {
+                    if (i > 0 && vertices[i - 1].z < vertices[i].z)
+                    {
                         GoTo0(vertices[i].x, vertices[i].y, vertices[i].z);
                     }
                     else
